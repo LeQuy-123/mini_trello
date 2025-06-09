@@ -24,7 +24,7 @@ export const authenticate = (
     const decoded = jwt.verify(token, JWT_SECRET) as AuthPayload;
     req.uid = decoded.uid;
     next();
-  } catch {
+  } catch (error) {
     res.sendStatus(403);
   }
 };

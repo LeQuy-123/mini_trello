@@ -72,8 +72,7 @@ router.post("/signup", async (req: Request, res: Response) => {
 
   await userDoc.set(newUser);
 
-  const token = jwt.sign({ uid: userDoc.id }, JWT_SECRET, { expiresIn: "7d" });
-  res.status(201).json({ user: { id: userDoc.id, email, name }, token });
+  res.status(201).json({ user: { id: userDoc.id, email, name } });
 });
 
 /**
