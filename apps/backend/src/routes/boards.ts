@@ -2,6 +2,7 @@ import { Request, Response, Router } from "express";
 import { db } from "../firebase";
 import { authenticate } from "../middleware/authMiddleware";
 import { Board } from "../types/Board";
+import { Timestamp } from "firebase-admin/firestore";
 
 const router = Router();
 
@@ -49,35 +50,50 @@ const router = Router();
  *                 description:
  *                   type: string
  */
-router.post("/", authenticate, async  (req: Request, res: Response) => {
+router.post("/", authenticate, async (req: Request, res: Response) => {
   const { name, description } = req.body;
+
   if (!name || !description) {
     res.status(400).json({ error: "Missing fields" });
     return;
   }
-    
 
-  const docRef = await db.collection("boards").add({
-    name,
-    description,
-    userId: req.uid,
-    createdAt: new Date(),
-  });
+  try {
+    const docRef = await db.collection("boards").add({
+      name,
+      description,
+      userId: req.uid,
+      createdAt: Timestamp.now(),
+      members: [], // empty array to save user who being invited to this boards
+    });
 
-  res.status(201).json({ id: docRef.id, name, description });
+    res.status(201).json({ id: docRef.id, name, description });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to create board", details: error });
+  }
 });
-
 /**
  * @swagger
  * /boards:
  *   get:
- *     summary: Get all boards for user
+ *     summary: Get boards created by or shared with the user
  *     tags: [Boards]
  *     security:
  *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: name
+ *         schema:
+ *           type: string
+ *         description: Filter boards by name (case-insensitive, partial match)
+ *       - in: query
+ *         name: onlyMine
+ *         schema:
+ *           type: boolean
+ *         description: If true, only return boards created by the user
  *     responses:
  *       200:
- *         description: List of boards
+ *         description: List of boards (sorted by creation time descending)
  *         content:
  *           application/json:
  *             schema:
@@ -87,30 +103,72 @@ router.post("/", authenticate, async  (req: Request, res: Response) => {
  *                 properties:
  *                   id:
  *                     type: string
+ *                     description: Board ID
  *                   name:
  *                     type: string
+ *                     description: Board name
  *                   description:
  *                     type: string
+ *                     description: Board description
  */
-router.get("/", authenticate, async  (req: Request, res: Response) => {
-  const snapshot = await db
-    .collection("boards")
-    .where("userId", "==", req.uid)
-    .get();
-    const boards = snapshot.docs.map((doc) => {
+
+router.get("/", authenticate, async (req: Request, res: Response) => {
+  try {
+    const userId = req.uid;
+    const { name, onlyMine } = req.query;
+
+    const boardDocs: FirebaseFirestore.QueryDocumentSnapshot[] = [];
+    if (!onlyMine || onlyMine === "false") {
+      const acceptedBoardsSnapshot = await db
+        .collection("boards")
+        .where("members", "array-contains", userId)
+        .get();
+      boardDocs.push(...acceptedBoardsSnapshot.docs);
+    }
+
+    const ownedBoardsSnapshot = await db
+      .collection("boards")
+      .where("userId", "==", userId)
+      .get();
+    boardDocs.push(...ownedBoardsSnapshot.docs);
+
+    const uniqueBoardsMap = new Map<string, FirebaseFirestore.DocumentData>();
+    boardDocs.forEach((doc) => {
+      if (!uniqueBoardsMap.has(doc.id)) {
+        uniqueBoardsMap.set(doc.id, doc);
+      }
+    });
+
+    let boards = Array.from(uniqueBoardsMap.values()).map((doc) => {
       const data = doc.data() as Board;
       return {
         id: doc.id,
         name: data.name,
         description: data.description,
+        createdAt: data.createdAt?.toMillis?.() || 0, 
       };
     });
-  res
-    .status(200)
-    .json(
-      boards.map(({ id, name, description }) => ({ id, name, description }))
-    );
+
+    if (name && typeof name === "string") {
+      const lowerName = name.toLowerCase();
+      boards = boards.filter((board) =>
+        board.name.toLowerCase().includes(lowerName)
+      );
+    }
+
+    boards.sort((a, b) => b.createdAt - a.createdAt);
+
+    res
+      .status(200)
+      .json(
+        boards.map(({ id, name, description }) => ({ id, name, description }))
+      );
+  } catch (err) {
+    console.error("Error fetching boards:", err);
+    res.status(500).json({ error: "Failed to fetch boards", details: err });
+  }
 });
+
 
 /**
  * @swagger

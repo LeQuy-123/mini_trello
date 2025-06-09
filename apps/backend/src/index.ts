@@ -7,6 +7,7 @@ import swaggerUi from "swagger-ui-express";
 import swaggerJsdoc from "swagger-jsdoc";
 import authRoute from "./routes/auth";
 import boardRoutes from "./routes/boards";
+import invitationsRouter from "./routes/invitations";
 
 import path from "path";
 
@@ -61,9 +62,9 @@ app.use(
 // Your routes
 app.use("/auth", authRoute);
 app.use("/boards", boardRoutes);
+app.use("/invitations", invitationsRouter);
 
 app.use("/", (req, res) => {
-  console.log("🚀 ~ app.use ~ req:", req.url);
   res.send("Hello world");
 });
 
