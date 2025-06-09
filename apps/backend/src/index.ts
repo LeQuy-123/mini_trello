@@ -8,8 +8,10 @@ import swaggerJsdoc from "swagger-jsdoc";
 import authRoute from "./routes/auth";
 import boardRoutes from "./routes/boards";
 import invitationsRouter from "./routes/invitations";
+import cardRouter from "./routes/cards";
 
 import path from "path";
+import tasksRouter from "./routes/tasks";
 
 const PORT = process.env.PORT || 3001;
 
@@ -62,6 +64,7 @@ app.use(
 // Your routes
 app.use("/auth", authRoute);
 app.use("/boards", boardRoutes);
+
 app.use("/invitations", invitationsRouter);
 
 app.use("/", (req, res) => {

@@ -3,12 +3,13 @@ import { Timestamp } from "firebase-admin/firestore";
 import { authenticate } from "../middleware/authMiddleware";
 import { checkBoardAccess } from "../middleware/checkBoardAccess";
 import { db } from "../firebase";
+import taskRoute from "./tasks";
 
 const router = Router();
  
 // 1. Get all cards in a board
 router.get(
-  "/:boardId/cards",
+  "/",
   authenticate,
   checkBoardAccess,
   async (req: Request, res: Response) => {
@@ -38,7 +39,7 @@ router.get(
 
 // 2. Create a new card in a board
 router.post(
-  "/:boardId/cards",
+  "/",
   authenticate,
   checkBoardAccess,
   async (req: Request, res: Response) => {
@@ -72,7 +73,7 @@ router.post(
 
 // 3. Get specific card details
 router.get(
-  "/:boardId/cards/:id",
+  "/:id",
   authenticate,
   checkBoardAccess,
   async (req: Request, res: Response) => {
@@ -107,7 +108,7 @@ router.get(
 
 // 4. Get cards by user in a board
 router.get(
-  "/:boardId/cards/user/:user_id",
+  "/user/:user_id",
   authenticate,
   checkBoardAccess,
   async (req: Request, res: Response) => {
@@ -147,7 +148,7 @@ router.get(
 
 // 5. Update card details
 router.put(
-  "/:boardId/cards/:id",
+  "/:id",
   authenticate,
   checkBoardAccess,
   async (req: Request, res: Response) => {
@@ -193,7 +194,7 @@ router.put(
 
 // 6. Delete a card
 router.delete(
-  "/:boardId/cards/:id",
+  "/:id",
   authenticate,
   checkBoardAccess,
   async (req: Request, res: Response) => {
@@ -221,5 +222,6 @@ router.delete(
     }
   }
 );
+router.use("/:id/tasks", taskRoute);
 
 export default router;

@@ -3,7 +3,7 @@ import { db } from "../firebase";
 import { authenticate } from "../middleware/authMiddleware";
 import { Board } from "../types/Board";
 import { Timestamp } from "firebase-admin/firestore";
-
+import cardRoutes from "./cards";
 const router = Router();
 
 /**
@@ -300,5 +300,8 @@ router.delete("/:id", authenticate, async  (req: Request, res: Response) => {
   await docRef.delete();
   res.sendStatus(204);
 });
+
+
+router.use("/:boardId/cards", cardRoutes);
 
 export default router;
