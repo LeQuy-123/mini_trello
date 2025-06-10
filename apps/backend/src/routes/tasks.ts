@@ -11,7 +11,7 @@ import { authenticate } from "../middleware/authMiddleware";
 import { checkBoardAccess } from "../middleware/checkBoardAccess";
 import { db } from "../firebase";
 
-const router = Router();
+const router = Router({ mergeParams: true });
 
 /**
  * @swagger
@@ -71,6 +71,17 @@ router.get(
  *     tags: [Tasks]
  *     security:
  *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: boardId
+ *         required: true
+ *         schema:
+ *           type: string
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
  *     requestBody:
  *       required: true
  *       content:

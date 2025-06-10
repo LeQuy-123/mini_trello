@@ -5,9 +5,49 @@ import { checkBoardAccess } from "../middleware/checkBoardAccess";
 import { db } from "../firebase";
 import taskRoute from "./tasks";
 
-const router = Router();
- 
-// 1. Get all cards in a board
+const router = Router({mergeParams: true });
+/**
+ * @swagger
+ * tags:
+ *   name: Cards
+ *   description: Card management within boards
+ */
+
+/**
+ * @swagger
+ * /boards/{boardId}/cards:
+ *   get:
+ *     summary: Get all cards in a board
+ *     tags: [Cards]
+ *     parameters:
+ *       - in: path
+ *         name: boardId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: The ID of the board
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: List of cards
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   id:
+ *                     type: string
+ *                   name:
+ *                     type: string
+ *                   description:
+ *                     type: string
+ *       500:
+ *         description: Failed to fetch cards
+ */
+
 router.get(
   "/",
   authenticate,
@@ -37,7 +77,43 @@ router.get(
   }
 );
 
-// 2. Create a new card in a board
+/**
+ * @swagger
+ * /boards/{boardId}/cards:
+ *   post:
+ *     summary: Create a new card in a board
+ *     tags: [Cards]
+ *     parameters:
+ *       - in: path
+ *         name: boardId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - name
+ *               - description
+ *             properties:
+ *               name:
+ *                 type: string
+ *               description:
+ *                 type: string
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       201:
+ *         description: Card created
+ *       400:
+ *         description: Missing fields
+ *       500:
+ *         description: Failed to create card
+ */
+
 router.post(
   "/",
   authenticate,
@@ -70,8 +146,35 @@ router.post(
     }
   }
 );
-
-// 3. Get specific card details
+/**
+ * @swagger
+ * /boards/{boardId}/cards/{id}:
+ *   get:
+ *     summary: Get details of a specific card
+ *     tags: [Cards]
+ *     parameters:
+ *       - in: path
+ *         name: boardId
+ *         required: true
+ *         schema:
+ *           type: string
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Card details
+ *       404:
+ *         description: Card not found
+ *       400:
+ *         description: Card does not belong to this board
+ *       500:
+ *         description: Failed to fetch card
+ */
 router.get(
   "/:id",
   authenticate,
@@ -105,8 +208,31 @@ router.get(
     }
   }
 );
-
-// 4. Get cards by user in a board
+/**
+ * @swagger
+ * /boards/{boardId}/cards/user/{user_id}:
+ *   get:
+ *     summary: Get cards by user in a board
+ *     tags: [Cards]
+ *     parameters:
+ *       - in: path
+ *         name: boardId
+ *         required: true
+ *         schema:
+ *           type: string
+ *       - in: path
+ *         name: user_id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Cards created by user
+ *       500:
+ *         description: Failed to fetch cards
+ */
 router.get(
   "/user/:user_id",
   authenticate,
@@ -146,7 +272,40 @@ router.get(
   }
 );
 
-// 5. Update card details
+/**
+ * @swagger
+ * /boards/{boardId}/cards/{id}:
+ *   put:
+ *     summary: Update a card's details
+ *     tags: [Cards]
+ *     parameters:
+ *       - in: path
+ *         name: boardId
+ *         required: true
+ *         schema:
+ *           type: string
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Card updated
+ *       400:
+ *         description: Invalid request
+ *       404:
+ *         description: Card not found
+ *       500:
+ *         description: Failed to update card
+ */
 router.put(
   "/:id",
   authenticate,
@@ -192,7 +351,33 @@ router.put(
   }
 );
 
-// 6. Delete a card
+/**
+ * @swagger
+ * /boards/{boardId}/cards/{id}:
+ *   delete:
+ *     summary: Delete a card
+ *     tags: [Cards]
+ *     parameters:
+ *       - in: path
+ *         name: boardId
+ *         required: true
+ *         schema:
+ *           type: string
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       204:
+ *         description: Card deleted
+ *       404:
+ *         description: Card not found
+ *       500:
+ *         description: Failed to delete card
+ */
 router.delete(
   "/:id",
   authenticate,
