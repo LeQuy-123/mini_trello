@@ -1,4 +1,4 @@
-import { useAuth } from "@auth/AuthProvider";
+import { useAuth } from "@utils/useAuth";
 
 export default function Boards() {
     const { user, logout } = useAuth();

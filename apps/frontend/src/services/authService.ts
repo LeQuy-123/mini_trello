@@ -22,17 +22,17 @@ export interface AuthResponse {
 
 class AuthService {
   async signIn(payload: SignInPayload): Promise<AuthResponse> {
-    const res = await apiClient.post<AuthResponse>("/signin", payload);
+    const res = await apiClient.post<AuthResponse>("auth/signin", payload);
     return res.data;
   }
 
   async signUp(payload: SignUpPayload): Promise<{ user: User }> {
-    const res = await apiClient.post<{ user: User }>("/signup", payload);
+    const res = await apiClient.post<{ user: User }>("auth/signup", payload);
     return res.data;
   }
 
   async fetchProfile(): Promise<User> {
-    const res = await apiClient.get<User>("/profile");
+    const res = await apiClient.get<User>("auth/profile");
     return res.data;
   }
 }
