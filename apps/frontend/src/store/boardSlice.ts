@@ -6,9 +6,15 @@ import type { AsyncStatus } from "@utils/type";
 // Thunks
 export const getBoards = createAsyncThunk(
   "boards/getAll",
-  async (_, thunkAPI) => {
+  async (
+    payload: {
+      name?: string;
+      created?: boolean;
+    },
+    thunkAPI
+  ) => {
     try {
-      const boards: Board[] = await BoardService.getBoards();
+      const boards: Board[] = await BoardService.getBoards(payload);
       return boards;
     } catch (error: any) {
       return thunkAPI.rejectWithValue(

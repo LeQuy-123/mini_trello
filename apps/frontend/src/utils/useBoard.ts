@@ -20,7 +20,8 @@ export const useBoard = () => {
     createBoardsStatus,
     updateBoardsStatus,
     removeBoardsStatus,
-    getBoards: () => dispatch(getBoards()),
+    getBoards: (params: { name?: string; created?: boolean }) =>
+      dispatch(getBoards(params)),
     createBoard: (data: { name: string; description: string }) =>
       dispatch(createBoard(data)),
     updateBoard: (id: string, data: { name: string; description: string }) =>

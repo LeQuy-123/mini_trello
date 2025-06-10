@@ -17,7 +17,7 @@ class BoardService {
 
   static async getBoards(params?: {
     name?: string;
-    onlyMine?: boolean;
+    created?: boolean;
   }): Promise<Board[]> {
     const res = await apiClient.get<Board[]>("/boards", { params });
     return res.data;
@@ -42,8 +42,6 @@ class BoardService {
   static async deleteBoard(id: string): Promise<void> {
     await apiClient.delete(`/boards/${id}`);
   }
-
-
 }
 
 export default BoardService;

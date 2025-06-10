@@ -87,7 +87,7 @@ router.post("/", authenticate, async (req: Request, res: Response) => {
  *           type: string
  *         description: Filter boards by name (case-insensitive, partial match)
  *       - in: query
- *         name: onlyMine
+ *         name: created
  *         schema:
  *           type: boolean
  *         description: If true, only return boards created by the user
@@ -115,22 +115,32 @@ router.post("/", authenticate, async (req: Request, res: Response) => {
 router.get("/", authenticate, async (req: Request, res: Response) => {
   try {
     const userId = req.uid;
-    const { name, onlyMine } = req.query;
+    const { name, created } = req.query;
 
     const boardDocs: FirebaseFirestore.QueryDocumentSnapshot[] = [];
-    if (!onlyMine || onlyMine === "false") {
-      const acceptedBoardsSnapshot = await db
+
+    if (created === "true") {
+      const ownedBoardsSnapshot = await db
+        .collection("boards")
+        .where("userId", "==", userId)
+        .get();
+      boardDocs.push(...ownedBoardsSnapshot.docs);
+    } else if (created === "false") {
+      const invitedBoardsSnapshot = await db
         .collection("boards")
         .where("members", "array-contains", userId)
         .get();
-      boardDocs.push(...acceptedBoardsSnapshot.docs);
+      boardDocs.push(...invitedBoardsSnapshot.docs);
+    } else {
+      const [ownedSnapshot, invitedSnapshot] = await Promise.all([
+        db.collection("boards").where("userId", "==", userId).get(),
+        db
+          .collection("boards")
+          .where("members", "array-contains", userId)
+          .get(),
+      ]);
+      boardDocs.push(...ownedSnapshot.docs, ...invitedSnapshot.docs);
     }
-
-    const ownedBoardsSnapshot = await db
-      .collection("boards")
-      .where("userId", "==", userId)
-      .get();
-    boardDocs.push(...ownedBoardsSnapshot.docs);
 
     const uniqueBoardsMap = new Map<string, FirebaseFirestore.DocumentData>();
     boardDocs.forEach((doc) => {
@@ -145,7 +155,7 @@ router.get("/", authenticate, async (req: Request, res: Response) => {
         id: doc.id,
         name: data.name,
         description: data.description,
-        createdAt: data.createdAt?.toMillis?.() || 0, 
+        createdAt: data.createdAt?.toMillis?.() || 0,
       };
     });
 
@@ -168,6 +178,7 @@ router.get("/", authenticate, async (req: Request, res: Response) => {
     res.status(500).json({ error: "Failed to fetch boards", details: err });
   }
 });
+
 
 
 /**
