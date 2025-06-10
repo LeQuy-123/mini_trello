@@ -1,3 +1,4 @@
+import { BoardList } from "@components/BoardList";
 import { useAuth } from "@utils/useAuth";
 
 export default function Boards() {
@@ -7,6 +8,7 @@ export default function Boards() {
         <div>
             <h1>Welcome to Boards, {user?.name}</h1>
             <button onClick={logout}>Log out</button>
+            <BoardList/>
         </div>
     );
 }

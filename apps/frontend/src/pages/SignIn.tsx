@@ -14,6 +14,7 @@ import {  useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup"
 import * as Yup from "yup"
 import CustomTextField from "@components/CustomTextField";
+import { toast } from "react-toastify";
 type LoginValues = {
     email: string
     password: string
@@ -44,7 +45,7 @@ export default function SignIn() {
         login({ email, password }).unwrap().then((() => {
             navigate("/boards")
         })).catch((err) => {
-            console.error("Login failed:", err);
+            toast.error("Login failed: "+ err)
         });
     };
 
@@ -58,14 +59,9 @@ export default function SignIn() {
             alignItems="center"
             sx={{ backgroundColor: (theme) => theme.palette.background.default}}
         >
-            {/* Theme Toggle */}
-            
-            {/* App Title */}
             <Typography variant="h3" fontWeight={700} gutterBottom textAlign="center">
                 Mini Trello
             </Typography>
-
-            {/* Sign In Card */}
             <Card
                 elevation={3}
                 sx={{
@@ -123,7 +119,6 @@ export default function SignIn() {
                         )}
                     </Button>
 
-                    {/* Register link */}
                     <Box mt={2} textAlign="center">
                         <Typography variant="body2">
                             Don’t have an account?{" "}
@@ -138,15 +133,11 @@ export default function SignIn() {
                             </Box>
                         </Typography>
                     </Box>
-
-                    {/* GitHub login */}
                     <Button
                         fullWidth
-                        // startIcon={<GitHubIcon />}
                         variant="outlined"
                         sx={{ mt: 4, height: 40 }}
                         onClick={() => {
-                            // GitHub login logic
                         }}
                     >
                         Sign in with GitHub

@@ -1,16 +1,14 @@
 import { createSlice, createAsyncThunk, type PayloadAction } from "@reduxjs/toolkit";
 import { authService, type User } from "@services/authService";
+import { getDefaultAsyncState } from "@utils/helper";
+import type { AsyncStatus } from "@utils/type";
 
 interface LoginAPIRes {
   token: string;
   user: User;
 }
 
-interface AsyncStatus {
-  loading: boolean;
-  error: string | null;
-}
-
+ 
 interface AuthState {
   user: User | null;
   token: string | null;
@@ -19,11 +17,7 @@ interface AuthState {
   profile: AsyncStatus;
 }
 
-const getDefaultAsyncState = (): AsyncStatus => ({
-  loading: false,
-  error: null,
-});
-
+ 
 const localStoredAuth = localStorage.getItem("auth");
 const parsedAuth = localStoredAuth ? JSON.parse(localStoredAuth) : null;
 
@@ -88,7 +82,6 @@ export const getProfile = createAsyncThunk(
   }
 );
 
-// Slice
 const authSlice = createSlice({
   name: "auth",
   initialState,

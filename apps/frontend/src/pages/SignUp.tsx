@@ -14,6 +14,7 @@ import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup"
 import * as Yup from "yup"
 import CustomTextField from "@components/CustomTextField";
+import { toast } from "react-toastify";
 type RegisterValue = {
   name: string
   email: string
@@ -51,7 +52,7 @@ export default function SignUp() {
     register({ name, email, password }).unwrap().then((() => {
       navigate("/boards")
     })).catch((err) => {
-      console.error("Login failed:", err);
+      toast.error("Register failed: "+ err)
     });
   };
 
@@ -65,14 +66,9 @@ export default function SignUp() {
       alignItems="center"
       sx={{ backgroundColor: (theme) => theme.palette.background.default }}
     >
-      {/* Theme Toggle */}
-
-      {/* App Title */}
       <Typography variant="h3" fontWeight={700} gutterBottom textAlign="center">
         Mini Trello
       </Typography>
-
-      {/* Sign In Card */}
       <Card
         elevation={3}
         sx={{
@@ -144,8 +140,6 @@ export default function SignUp() {
               "Sign Up"
             )}
           </Button>
-
-          {/* Register link */}
           <Box mt={2} textAlign="center">
             <Typography variant="body2">
               Already have an account?{" "}
@@ -160,8 +154,6 @@ export default function SignUp() {
               </Box>
             </Typography>
           </Box>
-
-           
         </form>
       </Card>
     </Box>
