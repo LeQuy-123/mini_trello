@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
     Modal,
     Box,
@@ -21,6 +21,7 @@ type CreateBoardForm = {
 type CreateBoardModalProps = {
     open: boolean;
     onClose: () => void;
+    board?: { id: string; name: string; description: string } | null;
 };
 
 const schema = yup.object({
@@ -31,26 +32,38 @@ const schema = yup.object({
 export const CreateBoardModal: React.FC<CreateBoardModalProps> = ({
     open,
     onClose,
+    board
 }) => {
     const {
         createBoard,
-        createBoardsStatus
+        createBoardsStatus,
+        updateBoard,
+        updateBoardsStatus
     } = useBoard()
     const {
         control,
         handleSubmit,
         formState: { errors },
         reset,
+        setValue,
     } = useForm<CreateBoardForm>({
         resolver: yupResolver(schema),
     });
-
+    useEffect(() => {
+        if (board) {
+            setValue('name', board.name);
+            setValue('description', board.description);
+        } else {
+            reset();
+        }
+    }, [board, open]);
     const onSubmit = async (data: CreateBoardForm) => {
-        const {name, description} = data
-        createBoard({
-            name,
-            description
-        })
+        if (board) {
+            
+            await updateBoard(board.id, data);
+        } else {
+            await createBoard(data);
+        }
         reset();
         onClose();
     };
@@ -58,6 +71,8 @@ export const CreateBoardModal: React.FC<CreateBoardModalProps> = ({
         reset();
         onClose();
     }
+    const isEditing = Boolean(board);
+    const loading = isEditing ? updateBoardsStatus.loading : createBoardsStatus.loading;
 
     return (
         <Modal
@@ -81,7 +96,7 @@ export const CreateBoardModal: React.FC<CreateBoardModalProps> = ({
                     }}
                 >
                     <Typography variant="h6" mb={2}>
-                        Create New Board
+                        {isEditing ? 'Edit Board' : 'Create New Board'}
                     </Typography>
                     <form onSubmit={handleSubmit(onSubmit)}>
                         <CustomTextField
@@ -111,10 +126,12 @@ export const CreateBoardModal: React.FC<CreateBoardModalProps> = ({
                                 type="submit"
                                 color="primary"
                                 variant="contained"
-                                disabled={createBoardsStatus.loading}
+                                disabled={loading}
                             >
-                                {createBoardsStatus.loading ? 
-                                    <CircularProgress size={24} color="inherit" /> : 'Create'}
+                                {(loading) ?
+                                    <CircularProgress size={24} color="inherit" /> :
+                                    board ? 'Save' : 'Create'
+                                }
                             </Button>
                         </Box>
                     </form>

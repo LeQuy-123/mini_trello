@@ -35,7 +35,12 @@ export default function AppLayout() {
                 <Toolbar>
                     <Stack direction='row' sx={{ width: '100%' }} justifyContent="space-between">
                         <Stack direction='row' alignItems='center' gap={2}>
-                            <Typography variant="h6">Mini Trello</Typography>
+                            <Typography variant="h6" 
+                                sx={{
+                                    cursor: 'pointer',
+                                }}
+                                onClick={() => navigate('/')}
+                                >Mini Trello</Typography>
                             <Tabs
                                 value={currentTab === -1 ? false : currentTab}
                                 onChange={(_, newValue) => navigate(tabRoutes[newValue].path)}

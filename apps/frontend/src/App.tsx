@@ -11,6 +11,7 @@ import PublicRoute from "@auth/PublicRoute";
 import AppLayout from "@components/AppLayout";
 import Settings from "@pages/Settings";
 import Profile from "@pages/Profile";
+import BoardDetail from "@pages/BoardDetail";
 
 function App() {
   const { mode } = useCustomTheme()
@@ -56,6 +57,7 @@ function App() {
           }
         >
           <Route path="/boards" element={<Boards />} />
+          <Route path="/boards/:id" element={<BoardDetail />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/profile" element={<Profile />} />
         </Route>

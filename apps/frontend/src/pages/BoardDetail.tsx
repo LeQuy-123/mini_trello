@@ -2,17 +2,17 @@ import {
     Box,
     Typography,
 } from "@mui/material";
-import { BoardList } from "@components/BoardList";
 
 export default function BoardDetail() {
 
+    
     return (
         <Box sx={{ flexGrow: 1 }}>
             <Box sx={{ p: 2 }}>
                 <Typography variant="subtitle1" gutterBottom>
                     Your Workspace
                 </Typography>
-                <BoardList />
+            
             </Box>
         </Box>
     );
