@@ -3,7 +3,6 @@ import BoardService, { type Board } from '@services/boardService';
 import { getDefaultAsyncState } from '@utils/helper';
 import type { AsyncStatus } from '@utils/type';
 
-// Thunks
 export const getBoards = createAsyncThunk(
 	'boards/getAll',
 	async (
@@ -18,6 +17,20 @@ export const getBoards = createAsyncThunk(
 			return boards;
 		} catch (error: any) {
 			return thunkAPI.rejectWithValue(error?.message || 'Failed to fetch boards');
+		}
+	}
+);
+export const getBoard = createAsyncThunk(
+	'boards/getOne',
+	async (
+		payload: string,
+		thunkAPI
+	) => {
+		try {
+			const board: Board = await BoardService.getBoard(payload);
+			return board;
+		} catch (error: any) {
+			return thunkAPI.rejectWithValue(error?.message || 'Failed to fetch board detail');
 		}
 	}
 );
@@ -54,7 +67,9 @@ export const deleteBoard = createAsyncThunk('boards/delete', async (id: string, 
 
 interface BoardState {
 	boards: Board[];
+	board: Board | null;
 	get: AsyncStatus;
+	getOne: AsyncStatus;
 	create: AsyncStatus;
 	update: AsyncStatus;
 	remove: AsyncStatus;
@@ -62,7 +77,9 @@ interface BoardState {
 
 const initialState: BoardState = {
 	boards: [],
+	board: null,
 	get: getDefaultAsyncState(),
+	getOne: getDefaultAsyncState(),
 	create: getDefaultAsyncState(),
 	update: getDefaultAsyncState(),
 	remove: getDefaultAsyncState(),
@@ -74,13 +91,14 @@ const boardSlice = createSlice({
 	reducers: {
 		resetStatus(state) {
 			state.get = getDefaultAsyncState();
+			state.getOne = getDefaultAsyncState();
 			state.create = getDefaultAsyncState();
 			state.update = getDefaultAsyncState();
 			state.remove = getDefaultAsyncState();
 		},
 	},
 	extraReducers: (builder) => {
-		const handleAsync = <K extends keyof Omit<BoardState, 'boards'>>(type: K, thunk: any) => {
+		const handleAsync = <K extends keyof Omit<BoardState, 'boards' | 'board'>>(type: K, thunk: any) => {
 			builder
 				.addCase(thunk.pending, (state) => {
 					state[type].loading = true;
@@ -91,6 +109,9 @@ const boardSlice = createSlice({
 
 					if (type === 'get') {
 						state.boards = action.payload;
+					}
+					if (type === 'getOne') {
+						state.board = action.payload;
 					}
 
 					if (type === 'create') {
@@ -115,6 +136,7 @@ const boardSlice = createSlice({
 		};
 
 		handleAsync('get', getBoards);
+		handleAsync('getOne', getBoard);
 		handleAsync('create', createBoard);
 		handleAsync('update', updateBoard);
 		handleAsync('remove', deleteBoard);

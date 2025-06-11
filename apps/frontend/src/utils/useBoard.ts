@@ -1,6 +1,6 @@
 import { useDispatch, useSelector } from 'react-redux';
 import type { AppDispatch, RootState } from '@store/index';
-import { createBoard, deleteBoard, getBoards, updateBoard } from '@store/boardSlice';
+import { createBoard, deleteBoard, getBoards, updateBoard, getBoard } from '@store/boardSlice';
 import { resetStatus } from '@store/authSlice';
 
 export const useBoard = () => {
@@ -8,6 +8,8 @@ export const useBoard = () => {
 
 	const {
 		boards,
+		board,
+		getOne: getDetailBoardsStatus,
 		get: getBoardsStatus,
 		create: createBoardsStatus,
 		update: updateBoardsStatus,
@@ -16,11 +18,14 @@ export const useBoard = () => {
 
 	return {
 		boards,
+		boardDetail: board,
 		getBoardsStatus,
+		getDetailBoardsStatus,
 		createBoardsStatus,
 		updateBoardsStatus,
 		removeBoardsStatus,
 		getBoards: (params: { name?: string; created?: boolean }) => dispatch(getBoards(params)),
+		getBoardDetails: (params: { id: string }) => dispatch(getBoard(params.id)),
 		createBoard: (data: { name: string; description: string }) => dispatch(createBoard(data)),
 		updateBoard: (id: string, data: { name: string; description: string }) =>
 			dispatch(updateBoard({ id, data })),
