@@ -1,6 +1,7 @@
 import { createSlice } from '@reduxjs/toolkit';
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import CardService, { type  Card } from '@services/cardService';
+import { showError, showSuccess } from '@utils/helper';
 
 export const getCards = createAsyncThunk(
 	'cards/getAll',
@@ -45,13 +46,16 @@ export const createCard = createAsyncThunk(
 			data,
 		}: {
 			boardId: string;
-			data: { title: string; description?: string; assignedUserIds?: string[] };
+			data: { name: string; description?: string };
 		},
 		thunkAPI
 	) => {
 		try {
-			return await CardService.createCard(boardId, data);
+			const res = await CardService.createCard(boardId, data);
+			showSuccess('Card created successfully');
+			return res;
 		} catch (error: any) {
+			showError(error?.message);
 			return thunkAPI.rejectWithValue(error?.message || 'Failed to create card');
 		}
 	}
@@ -67,13 +71,16 @@ export const updateCard = createAsyncThunk(
 		}: {
 			boardId: string;
 			cardId: string;
-			data: { title?: string; description?: string; assignedUserIds?: string[] };
+			data: { name?: string; description?: string };
 		},
 		thunkAPI
 	) => {
 		try {
-			return await CardService.updateCard(boardId, cardId, data);
+			const res = await CardService.updateCard(boardId, cardId, data);
+			showSuccess('Card updated successfully');
+			return res;
 		} catch (error: any) {
+			showError(error?.message);
 			return thunkAPI.rejectWithValue(error?.message || 'Failed to update card');
 		}
 	}
@@ -84,8 +91,10 @@ export const deleteCard = createAsyncThunk(
 	async ({ boardId, cardId }: { boardId: string; cardId: string }, thunkAPI) => {
 		try {
 			await CardService.deleteCard(boardId, cardId);
+			showSuccess('Card deleted successfully');
 			return cardId;
 		} catch (error: any) {
+			showError(error?.message);
 			return thunkAPI.rejectWithValue(error?.message || 'Failed to delete card');
 		}
 	}
@@ -156,7 +165,7 @@ const cardSlice = createSlice({
 						state.card = action.payload;
 					}
 					if (type === 'create') {
-						state.cards.unshift(action.payload);
+						state.cards.push(action.payload);
 					}
 					if (type === 'update') {
 						const index = state.cards.findIndex((c) => c.id === action.payload.id);

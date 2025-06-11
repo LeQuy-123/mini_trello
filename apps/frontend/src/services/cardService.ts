@@ -8,7 +8,6 @@ export interface Card {
 	boardId: string;
 	createdAt: any;
 	userId: string;
-	listMember?: string[];
 	tasksCount?: number;
 }
 
@@ -20,7 +19,7 @@ class CardService {
 	}
 	static async createCard(
 		boardId: string,
-		data: { title: string; description?: string; assignedUserIds?: string[] }
+		data: { name: string; description?: string;  }
 	): Promise<Card> {
 		const res = await apiClient.post<Card>(`/boards/${boardId}/cards`, data);
 		return res.data;
@@ -36,7 +35,7 @@ class CardService {
 	static async updateCard(
 		boardId: string,
 		cardId: string,
-		data: { title?: string; description?: string; assignedUserIds?: string[] }
+		data: { name?: string; description?: string;  }
 	): Promise<Card> {
 		const res = await apiClient.put<Card>(`/boards/${boardId}/cards/${cardId}`, data);
 		return res.data;

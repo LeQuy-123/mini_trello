@@ -4,17 +4,18 @@ import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import CustomTextField from './CustomTextField';
-import { useBoard } from '@utils/useBoard';
+import { useCard } from '@utils/useCard';
 
-type CreateBoardForm = {
+type CreateCardForm = {
 	name: string;
 	description: string;
 };
 
 type CreateCardModalProps = {
+	boardId: string
 	open: boolean;
 	onClose: () => void;
-	board?: { id: string; name: string; description: string } | null;
+	card?: { id: string; name: string; description: string } | null;
 };
 
 const schema = yup.object({
@@ -22,40 +23,45 @@ const schema = yup.object({
 	description: yup.string().required('Description is required'),
 });
 
-export const CreateCardModal: React.FC<CreateCardModalProps> = ({ open, onClose, board }) => {
-	const { createBoard, createBoardsStatus, updateBoard, updateBoardsStatus } = useBoard();
+export const CreateCardModal: React.FC<CreateCardModalProps> = ({ open, onClose, card, boardId }) => {
+	const { createCard, updateCard, createCardsStatus,updateCardsStatus } = useCard();
 	const {
 		control,
 		handleSubmit,
 		formState: { errors },
 		reset,
 		setValue,
-	} = useForm<CreateBoardForm>({
+	} = useForm<CreateCardForm>({
 		resolver: yupResolver(schema),
 	});
 	useEffect(() => {
-		if (board) {
-			setValue('name', board.name);
-			setValue('description', board.description);
+		if (card) {
+			setValue('name', card.name);
+			setValue('description', card.description);
 		} else {
 			reset();
 		}
-	}, [board, open]);
-	const onSubmit = async (data: CreateBoardForm) => {
-		if (board) {
-			await updateBoard(board.id, data);
+	}, [card, open]);
+	const onSubmit = async (data: CreateCardForm) => {
+		if (card) {
+			updateCard(boardId, card?.id, data)?.unwrap().finally(() => {
+				reset();
+				onClose();
+			})
 		} else {
-			await createBoard(data);
+			createCard(boardId, data)?.unwrap().finally(() => {
+				reset();
+				onClose();
+			})
 		}
-		reset();
-		onClose();
+
 	};
 	const handleClose = () => {
 		reset();
 		onClose();
 	};
-	const isEditing = Boolean(board);
-	const loading = isEditing ? updateBoardsStatus.loading : createBoardsStatus.loading;
+	const isEditing = Boolean(card);
+	const loading = isEditing ? updateCardsStatus.loading : createCardsStatus.loading;
 
 	return (
 		<Modal open={open} onClose={handleClose} closeAfterTransition>
@@ -74,13 +80,13 @@ export const CreateCardModal: React.FC<CreateCardModalProps> = ({ open, onClose,
 					}}
 				>
 					<Typography variant="h6" mb={2}>
-						{isEditing ? 'Edit Board' : 'Create New Board'}
+						{isEditing ? 'Edit Card' : 'Create New Card'}
 					</Typography>
 					<form onSubmit={handleSubmit(onSubmit)}>
 						<CustomTextField
 							name="name"
 							control={control}
-							label="Board Name"
+							label="Card name"
 							error={!!errors.name}
 							helperText={errors.name?.message}
 						/>
@@ -113,7 +119,7 @@ export const CreateCardModal: React.FC<CreateCardModalProps> = ({ open, onClose,
 							>
 								{loading ? (
 									<CircularProgress size={24} color="inherit" />
-								) : board ? (
+								) : card ? (
 									'Save'
 								) : (
 									'Create'

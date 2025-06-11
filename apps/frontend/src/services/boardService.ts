@@ -4,7 +4,7 @@ export interface Board {
 	id: string;
 	description: string;
 	userId: string;
-	cardCount: number;
+	cardsCount: number;
 	createdAt: any; // Firestore Timestamp or Date, nullable if missing
 	members?: string[]; // IDs of users accepted into this board
 }

@@ -3,9 +3,8 @@ import type { AppDispatch, RootState } from '@store/index';
 import { resetStatus } from '@store/authSlice';
 import { createCard, deleteCard, getCard, getCards, updateCard } from '@store/cardSlice';
 type CardBoody = {
-	title: string;
+	name: string;
 	description?: string;
-	assignedUserIds?: string[];
 };
 export const useCard = () => {
 	const dispatch = useDispatch<AppDispatch>();
