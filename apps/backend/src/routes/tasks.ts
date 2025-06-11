@@ -101,26 +101,37 @@ router.post('/', authenticate, checkBoardAccess, async (req: Request, res: Respo
 		return;
 	}
 
-	const docRef = await db.collection('tasks').add({
-		cardId,
-		boardId,
-		title,
-		description,
-		status,
-		ownerId: req.uid,
-		assignedUserIds: [],
-		createdAt: admin.firestore.Timestamp.now(),
-	});
-
-	res.status(201).json({
-		id: docRef.id,
-		cardId,
-		ownerId: req.uid,
-		title,
-		description,
-		status,
-	});
+	try {
+		const docRef = await db.collection('tasks').add({
+			cardId,
+			boardId,
+			title,
+			description,
+			status,
+			ownerId: req.uid,
+			assignedUserIds: [],
+			createdAt: admin.firestore.Timestamp.now(),
+		});
+		await db
+			.collection('cards')
+			.doc(cardId)
+			.update({
+				tasksCount: admin.firestore.FieldValue.increment(1),
+			});
+		res.status(201).json({
+			id: docRef.id,
+			cardId,
+			ownerId: req.uid,
+			title,
+			description,
+			status,
+		});
+	} catch (error) {
+		console.error('Error creating task:', error);
+		res.status(500).json({ error: 'Failed to create task', details: error });
+	}
 });
+
 
 /**
  * @swagger
@@ -165,13 +176,7 @@ router.get('/:taskId', authenticate, checkBoardAccess, async (req: Request, res:
 		return;
 	}
 
-	res.status(200).json({
-		id: taskDoc.id,
-		cardId: task.cardId,
-		title: task.title,
-		description: task.description,
-		status: task.status,
-	});
+	res.status(200).json({ ...taskDoc });
 });
 
 /**
@@ -236,22 +241,37 @@ router.put('/:taskId', authenticate, checkBoardAccess, async (req: Request, res:
 router.delete('/:taskId', authenticate, checkBoardAccess, async (req: Request, res: Response) => {
 	const { taskId, id: cardId } = req.params;
 
-	const docRef = db.collection('tasks').doc(taskId);
-	const doc = await docRef.get();
-	if (!doc.exists) {
-		res.status(404).json({ error: 'Task not found' });
-		return;
-	}
+	try {
+		const docRef = db.collection('tasks').doc(taskId);
+		const doc = await docRef.get();
 
-	const task = doc.data()!;
-	if (task.cardId !== cardId) {
-		res.status(400).json({ error: 'Card mismatch' });
-		return;
-	}
+		if (!doc.exists) {
+			res.status(404).json({ error: 'Task not found' });
+			return;
+		}
 
-	await docRef.delete();
-	res.status(204).send();
+		const task = doc.data()!;
+		if (task.cardId !== cardId) {
+			res.status(400).json({ error: 'Card mismatch' });
+			return;
+		}
+
+		await docRef.delete();
+
+		await db
+			.collection('cards')
+			.doc(cardId)
+			.update({
+				tasksCount: admin.firestore.FieldValue.increment(-1),
+			});
+
+		res.status(204).send();
+	} catch (error) {
+		console.error('Error deleting task:', error);
+		res.status(500).json({ error: 'Failed to delete task', details: error });
+	}
 });
+
 
 /**
  * @swagger

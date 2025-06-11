@@ -1,4 +1,5 @@
 import {
+	Button,
 	Card,
 	CardContent,
 	IconButton,
@@ -10,6 +11,7 @@ import {
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import type { Card as CardType } from '@services/cardService';
 import { useState } from 'react';
+import { useTask } from '@utils/useTask';
 
 type Props = {
 	card: CardType;
@@ -20,7 +22,7 @@ type Props = {
 export default function CardComponent({ card, onClickEdit, onClickDelete }: Props) {
 	const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 	const open = Boolean(anchorEl);
-
+	const {} = useTask()
 	const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
 		setAnchorEl(event.currentTarget);
 	};
@@ -81,6 +83,11 @@ export default function CardComponent({ card, onClickEdit, onClickDelete }: Prop
 							Delete
 						</MenuItem>
 					</Menu>
+				</Stack>
+				<Stack sx={{mt: 2}}>
+					<Button variant='outlined'>
+						+ Create task
+					</Button>
 				</Stack>
 			</CardContent>
 		</Card>
