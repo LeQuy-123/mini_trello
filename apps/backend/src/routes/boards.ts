@@ -64,7 +64,7 @@ router.post('/', authenticate, async (req: Request, res: Response) => {
 			description,
 			userId: req.uid,
 			createdAt: Timestamp.now(),
-			cardCount: 0,
+			cardsCount: 0,
 			members: [], // empty array to save user who being invited to this boards
 		});
 
@@ -211,8 +211,7 @@ router.get('/:id', authenticate, async (req: Request, res: Response) => {
 		return;
 	}
 
-	const { name, description } = doc.data()!;
-	res.status(200).json({ id: doc.id, name, description });
+	res.status(200).json({ id: doc.id, ...doc.data() });
 });
 
 /**

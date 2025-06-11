@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import BoardService, { type Board } from '@services/boardService';
-import { getDefaultAsyncState } from '@utils/helper';
+import { getDefaultAsyncState, showError, showSuccess } from '@utils/helper';
 import type { AsyncStatus } from '@utils/type';
 
 export const getBoards = createAsyncThunk(
@@ -39,8 +39,10 @@ export const createBoard = createAsyncThunk(
 	async (data: { name: string; description: string }, thunkAPI) => {
 		try {
 			const board: Board = await BoardService.createBoard(data);
+			showSuccess('Board created successfully');
 			return board;
 		} catch (error: any) {
+			showError(error?.message || 'Failed to create board');
 			return thunkAPI.rejectWithValue(error?.message || 'Failed to create board');
 		}
 	}
@@ -50,8 +52,10 @@ export const updateBoard = createAsyncThunk(
 	async (payload: { id: string; data: { name: string; description: string } }, thunkAPI) => {
 		try {
 			const board: Board = await BoardService.updateBoard(payload.id, payload.data);
+			showSuccess('Board updated successfully');
 			return board;
 		} catch (error: any) {
+			showError(error?.message || 'Failed to update board');
 			return thunkAPI.rejectWithValue(error?.message || 'Failed to update board');
 		}
 	}
@@ -59,8 +63,10 @@ export const updateBoard = createAsyncThunk(
 export const deleteBoard = createAsyncThunk('boards/delete', async (id: string, thunkAPI) => {
 	try {
 		await BoardService.deleteBoard(id);
+		showSuccess('Board deleted');
 		return id; // so reducer can remove it
 	} catch (error: any) {
+		showError(error?.message || 'Failed to delete board');
 		return thunkAPI.rejectWithValue(error?.message || 'Failed to delete board');
 	}
 });
@@ -106,25 +112,21 @@ const boardSlice = createSlice({
 				})
 				.addCase(thunk.fulfilled, (state, action) => {
 					state[type].loading = false;
-
 					if (type === 'get') {
 						state.boards = action.payload;
 					}
 					if (type === 'getOne') {
 						state.board = action.payload;
 					}
-
 					if (type === 'create') {
 						state.boards.unshift(action.payload);
 					}
-
 					if (type === 'update') {
 						const index = state.boards.findIndex((b) => b.id === action.payload.id);
 						if (index !== -1) {
 							state.boards[index] = action.payload;
 						}
 					}
-
 					if (type === 'remove') {
 						state.boards = state.boards.filter((b) => b.id !== action.payload);
 					}

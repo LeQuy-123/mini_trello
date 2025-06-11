@@ -23,7 +23,7 @@ type Props = {
 };
 
 export const BoardList = ({ created }: Props) => {
-	const { boards, getBoardsStatus, getBoards, deleteBoard } = useBoard();
+	const { boards, getBoardsStatus, getBoards, deleteBoard, removeBoardsStatus } = useBoard();
 	const theme = useTheme();
 	const [open, setOpen] = useState(false);
 	const [menuAnchorEl, setMenuAnchorEl] = useState<null | HTMLElement>(null);
@@ -63,7 +63,7 @@ export const BoardList = ({ created }: Props) => {
 
 	const handleDelete = () => {
 		if (menuBoardId) {
-			deleteBoard(menuBoardId);
+			deleteBoard(menuBoardId)
 		}
 		handleMenuClose();
 	};
@@ -74,7 +74,7 @@ export const BoardList = ({ created }: Props) => {
 
 	const handleBoardClick = (id: string) => navigate(`/boards/${id}`);
 
-	if (getBoardsStatus.loading) return <CircularProgress />;
+	if (getBoardsStatus.loading || removeBoardsStatus.loading) return <CircularProgress />;
 	if (getBoardsStatus.error) return <Alert severity="error">{getBoardsStatus.error}</Alert>;
 
 	return (

@@ -3,7 +3,7 @@ import { BoardList } from '@components/BoardList';
 
 export default function Boards() {
 	return (
-		<Box sx={{ flexGrow: 1 }}>
+		<Box sx={{ flexGrow: 1, p: 2 }}>
 			<Box sx={{ p: 2 }}>
 				<Typography variant="subtitle1" gutterBottom>
 					Your Workspace

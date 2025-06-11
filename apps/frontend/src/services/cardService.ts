@@ -2,6 +2,7 @@ import apiClient from './apiClient';
 
 
 export interface Card {
+	id: string;
 	name: string;
 	description: string;
 	boardId: string;

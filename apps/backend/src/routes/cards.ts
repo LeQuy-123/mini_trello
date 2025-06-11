@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { Timestamp } from 'firebase-admin/firestore';
+import { Timestamp, FieldValue } from 'firebase-admin/firestore';
 import { authenticate } from '../middleware/authMiddleware';
 import { checkBoardAccess } from '../middleware/checkBoardAccess';
 import { db } from '../firebase';
@@ -125,7 +125,12 @@ router.post('/', authenticate, checkBoardAccess, async (req: Request, res: Respo
 			listMember: [],
 			tasksCount: 0,
 		});
-
+		await db
+			.collection('boards')
+			.doc(boardId)
+			.update({
+				cardsCount: FieldValue.increment(1),
+			});
 		res.status(201).json({ id: docRef.id, name, description });
 	} catch (error) {
 		res.status(500).json({ error: 'Failed to create card', details: error });
