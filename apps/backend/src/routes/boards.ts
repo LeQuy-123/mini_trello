@@ -1,9 +1,9 @@
-import { Request, Response, Router } from "express";
-import { db } from "../firebase";
-import { authenticate } from "../middleware/authMiddleware";
-import { Board } from "../types/Board";
-import { Timestamp } from "firebase-admin/firestore";
-import cardRoutes from "./cards";
+import { Request, Response, Router } from 'express';
+import { db } from '../firebase';
+import { authenticate } from '../middleware/authMiddleware';
+import { Board } from '../types/Board';
+import { Timestamp } from 'firebase-admin/firestore';
+import cardRoutes from './cards';
 const router = Router();
 
 /**
@@ -50,27 +50,27 @@ const router = Router();
  *                 description:
  *                   type: string
  */
-router.post("/", authenticate, async (req: Request, res: Response) => {
-  const { name, description } = req.body;
+router.post('/', authenticate, async (req: Request, res: Response) => {
+	const { name, description } = req.body;
 
-  if (!name || !description) {
-    res.status(400).json({ error: "Missing fields" });
-    return;
-  }
+	if (!name || !description) {
+		res.status(400).json({ error: 'Missing fields' });
+		return;
+	}
 
-  try {
-    const docRef = await db.collection("boards").add({
-      name,
-      description,
-      userId: req.uid,
-      createdAt: Timestamp.now(),
-      members: [], // empty array to save user who being invited to this boards
-    });
+	try {
+		const docRef = await db.collection('boards').add({
+			name,
+			description,
+			userId: req.uid,
+			createdAt: Timestamp.now(),
+			members: [], // empty array to save user who being invited to this boards
+		});
 
-    res.status(201).json({ id: docRef.id, name, description });
-  } catch (error) {
-    res.status(500).json({ error: "Failed to create board", details: error });
-  }
+		res.status(201).json({ id: docRef.id, name, description });
+	} catch (error) {
+		res.status(500).json({ error: 'Failed to create board', details: error });
+	}
 });
 /**
  * @swagger
@@ -112,74 +112,65 @@ router.post("/", authenticate, async (req: Request, res: Response) => {
  *                     description: Board description
  */
 
-router.get("/", authenticate, async (req: Request, res: Response) => {
-  try {
-    const userId = req.uid;
-    const { name, created } = req.query;
+router.get('/', authenticate, async (req: Request, res: Response) => {
+	try {
+		const userId = req.uid;
+		const { name, created } = req.query;
 
-    const boardDocs: FirebaseFirestore.QueryDocumentSnapshot[] = [];
+		const boardDocs: FirebaseFirestore.QueryDocumentSnapshot[] = [];
 
-    if (created === "true") {
-      const ownedBoardsSnapshot = await db
-        .collection("boards")
-        .where("userId", "==", userId)
-        .get();
-      boardDocs.push(...ownedBoardsSnapshot.docs);
-    } else if (created === "false") {
-      const invitedBoardsSnapshot = await db
-        .collection("boards")
-        .where("members", "array-contains", userId)
-        .get();
-      boardDocs.push(...invitedBoardsSnapshot.docs);
-    } else {
-      const [ownedSnapshot, invitedSnapshot] = await Promise.all([
-        db.collection("boards").where("userId", "==", userId).get(),
-        db
-          .collection("boards")
-          .where("members", "array-contains", userId)
-          .get(),
-      ]);
-      boardDocs.push(...ownedSnapshot.docs, ...invitedSnapshot.docs);
-    }
+		if (created === 'true') {
+			const ownedBoardsSnapshot = await db
+				.collection('boards')
+				.where('userId', '==', userId)
+				.get();
+			boardDocs.push(...ownedBoardsSnapshot.docs);
+		} else if (created === 'false') {
+			const invitedBoardsSnapshot = await db
+				.collection('boards')
+				.where('members', 'array-contains', userId)
+				.get();
+			boardDocs.push(...invitedBoardsSnapshot.docs);
+		} else {
+			const [ownedSnapshot, invitedSnapshot] = await Promise.all([
+				db.collection('boards').where('userId', '==', userId).get(),
+				db.collection('boards').where('members', 'array-contains', userId).get(),
+			]);
+			boardDocs.push(...ownedSnapshot.docs, ...invitedSnapshot.docs);
+		}
 
-    const uniqueBoardsMap = new Map<string, FirebaseFirestore.DocumentData>();
-    boardDocs.forEach((doc) => {
-      if (!uniqueBoardsMap.has(doc.id)) {
-        uniqueBoardsMap.set(doc.id, doc);
-      }
-    });
+		const uniqueBoardsMap = new Map<string, FirebaseFirestore.DocumentData>();
+		boardDocs.forEach((doc) => {
+			if (!uniqueBoardsMap.has(doc.id)) {
+				uniqueBoardsMap.set(doc.id, doc);
+			}
+		});
 
-    let boards = Array.from(uniqueBoardsMap.values()).map((doc) => {
-      const data = doc.data() as Board;
-      return {
-        id: doc.id,
-        name: data.name,
-        description: data.description,
-        createdAt: data.createdAt?.toMillis?.() || 0,
-      };
-    });
+		let boards = Array.from(uniqueBoardsMap.values()).map((doc) => {
+			const data = doc.data() as Board;
+			return {
+				id: doc.id,
+				name: data.name,
+				description: data.description,
+				createdAt: data.createdAt?.toMillis?.() || 0,
+			};
+		});
 
-    if (name && typeof name === "string") {
-      const lowerName = name.toLowerCase();
-      boards = boards.filter((board) =>
-        board.name.toLowerCase().includes(lowerName)
-      );
-    }
+		if (name && typeof name === 'string') {
+			const lowerName = name.toLowerCase();
+			boards = boards.filter((board) => board.name.toLowerCase().includes(lowerName));
+		}
 
-    boards.sort((a, b) => b.createdAt - a.createdAt);
+		boards.sort((a, b) => b.createdAt - a.createdAt);
 
-    res
-      .status(200)
-      .json(
-        boards.map(({ id, name, description }) => ({ id, name, description }))
-      );
-  } catch (err) {
-    console.error("Error fetching boards:", err);
-    res.status(500).json({ error: "Failed to fetch boards", details: err });
-  }
+		res.status(200).json(
+			boards.map(({ id, name, description }) => ({ id, name, description }))
+		);
+	} catch (err) {
+		console.error('Error fetching boards:', err);
+		res.status(500).json({ error: 'Failed to fetch boards', details: err });
+	}
 });
-
-
 
 /**
  * @swagger
@@ -212,15 +203,15 @@ router.get("/", authenticate, async (req: Request, res: Response) => {
  *       404:
  *         description: Board not found
  */
-router.get("/:id", authenticate, async  (req: Request, res: Response) => {
-  const doc = await db.collection("boards").doc(req.params.id).get();
-  if (!doc.exists || doc.data()?.userId !== req.uid) {
-    res.sendStatus(404);
-    return;
-  }
+router.get('/:id', authenticate, async (req: Request, res: Response) => {
+	const doc = await db.collection('boards').doc(req.params.id).get();
+	if (!doc.exists || doc.data()?.userId !== req.uid) {
+		res.sendStatus(404);
+		return;
+	}
 
-  const { name, description } = doc.data()!;
-  res.status(200).json({ id: doc.id, name, description });
+	const { name, description } = doc.data()!;
+	res.status(200).json({ id: doc.id, name, description });
 });
 
 /**
@@ -265,18 +256,18 @@ router.get("/:id", authenticate, async  (req: Request, res: Response) => {
  *       404:
  *         description: Board not found
  */
-router.put("/:id", authenticate, async  (req: Request, res: Response) => {
-  const { name, description } = req.body;
-  const docRef = db.collection("boards").doc(req.params.id);
-  const doc = await docRef.get();
+router.put('/:id', authenticate, async (req: Request, res: Response) => {
+	const { name, description } = req.body;
+	const docRef = db.collection('boards').doc(req.params.id);
+	const doc = await docRef.get();
 
-  if (!doc.exists || doc.data()?.userId !== req.uid) {
-    res.sendStatus(404);
-    return
-  }
+	if (!doc.exists || doc.data()?.userId !== req.uid) {
+		res.sendStatus(404);
+		return;
+	}
 
-  await docRef.update({ name, description });
-  res.status(200).json({ id: req.params.id, name, description });
+	await docRef.update({ name, description });
+	res.status(200).json({ id: req.params.id, name, description });
 });
 
 /**
@@ -299,20 +290,19 @@ router.put("/:id", authenticate, async  (req: Request, res: Response) => {
  *       404:
  *         description: Board not found
  */
-router.delete("/:id", authenticate, async  (req: Request, res: Response) => {
-  const docRef = db.collection("boards").doc(req.params.id);
-  const doc = await docRef.get();
+router.delete('/:id', authenticate, async (req: Request, res: Response) => {
+	const docRef = db.collection('boards').doc(req.params.id);
+	const doc = await docRef.get();
 
-  if (!doc.exists || doc.data()?.userId !== req.uid) {
-    res.sendStatus(404);
-    return;
-  }
+	if (!doc.exists || doc.data()?.userId !== req.uid) {
+		res.sendStatus(404);
+		return;
+	}
 
-  await docRef.delete();
-  res.sendStatus(204);
+	await docRef.delete();
+	res.sendStatus(204);
 });
 
-
-router.use("/:boardId/cards", cardRoutes);
+router.use('/:boardId/cards', cardRoutes);
 
 export default router;

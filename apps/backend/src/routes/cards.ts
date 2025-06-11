@@ -1,11 +1,11 @@
-import { Router, Request, Response } from "express";
-import { Timestamp } from "firebase-admin/firestore";
-import { authenticate } from "../middleware/authMiddleware";
-import { checkBoardAccess } from "../middleware/checkBoardAccess";
-import { db } from "../firebase";
-import taskRoute from "./tasks";
+import { Router, Request, Response } from 'express';
+import { Timestamp } from 'firebase-admin/firestore';
+import { authenticate } from '../middleware/authMiddleware';
+import { checkBoardAccess } from '../middleware/checkBoardAccess';
+import { db } from '../firebase';
+import taskRoute from './tasks';
 
-const router = Router({mergeParams: true });
+const router = Router({ mergeParams: true });
 /**
  * @swagger
  * tags:
@@ -48,34 +48,26 @@ const router = Router({mergeParams: true });
  *         description: Failed to fetch cards
  */
 
-router.get(
-  "/",
-  authenticate,
-  checkBoardAccess,
-  async (req: Request, res: Response) => {
-    const { boardId } = req.params;
+router.get('/', authenticate, checkBoardAccess, async (req: Request, res: Response) => {
+	const { boardId } = req.params;
 
-    try {
-      const snapshot = await db
-        .collection("cards")
-        .where("boardId", "==", boardId)
-        .get();
+	try {
+		const snapshot = await db.collection('cards').where('boardId', '==', boardId).get();
 
-      const cards = snapshot.docs.map((doc) => {
-        const data = doc.data();
-        return {
-          id: doc.id,
-          name: data.name,
-          description: data.description,
-        };
-      });
+		const cards = snapshot.docs.map((doc) => {
+			const data = doc.data();
+			return {
+				id: doc.id,
+				name: data.name,
+				description: data.description,
+			};
+		});
 
-      res.status(200).json(cards);
-    } catch (error) {
-      res.status(500).json({ error: "Failed to fetch cards", details: error });
-    }
-  }
-);
+		res.status(200).json(cards);
+	} catch (error) {
+		res.status(500).json({ error: 'Failed to fetch cards', details: error });
+	}
+});
 
 /**
  * @swagger
@@ -114,38 +106,31 @@ router.get(
  *         description: Failed to create card
  */
 
-router.post(
-  "/",
-  authenticate,
-  checkBoardAccess,
-  async (req: Request, res: Response) => {
-    const { boardId } = req.params;
-    const { name, description } = req.body;
+router.post('/', authenticate, checkBoardAccess, async (req: Request, res: Response) => {
+	const { boardId } = req.params;
+	const { name, description } = req.body;
 
-    if (!name || !description) {
-      res
-        .status(400)
-        .json({ error: "Missing required fields: name or description" });
-      return
-    }
+	if (!name || !description) {
+		res.status(400).json({ error: 'Missing required fields: name or description' });
+		return;
+	}
 
-    try {
-      const docRef = await db.collection("cards").add({
-        name,
-        description,
-        boardId,
-        userId: req.uid,
-        createdAt: Timestamp.now(),
-        list_member: [],
-        tasks_count: 0,
-      });
+	try {
+		const docRef = await db.collection('cards').add({
+			name,
+			description,
+			boardId,
+			userId: req.uid,
+			createdAt: Timestamp.now(),
+			list_member: [],
+			tasks_count: 0,
+		});
 
-      res.status(201).json({ id: docRef.id, name, description });
-    } catch (error) {
-      res.status(500).json({ error: "Failed to create card", details: error });
-    }
-  }
-);
+		res.status(201).json({ id: docRef.id, name, description });
+	} catch (error) {
+		res.status(500).json({ error: 'Failed to create card', details: error });
+	}
+});
 /**
  * @swagger
  * /boards/{boardId}/cards/{id}:
@@ -175,39 +160,32 @@ router.post(
  *       500:
  *         description: Failed to fetch card
  */
-router.get(
-  "/:id",
-  authenticate,
-  checkBoardAccess,
-  async (req: Request, res: Response) => {
-    const { boardId, id } = req.params;
+router.get('/:id', authenticate, checkBoardAccess, async (req: Request, res: Response) => {
+	const { boardId, id } = req.params;
 
-    try {
-      const cardDoc = await db.collection("cards").doc(id).get();
+	try {
+		const cardDoc = await db.collection('cards').doc(id).get();
 
-      if (!cardDoc.exists) {
-        res.status(404).json({ error: "Card not found" });
-        return 
-      }
+		if (!cardDoc.exists) {
+			res.status(404).json({ error: 'Card not found' });
+			return;
+		}
 
-      const card = cardDoc.data()!;
-      if (card.boardId !== boardId) {
-        res.status(400).json({ error: "Card does not belong to this board" });
-        return 
-      }
+		const card = cardDoc.data()!;
+		if (card.boardId !== boardId) {
+			res.status(400).json({ error: 'Card does not belong to this board' });
+			return;
+		}
 
-      res.status(200).json({
-        id: cardDoc.id,
-        name: card.name,
-        description: card.description,
-      });
-    } catch (error) {
-      res
-        .status(500)
-        .json({ error: "Failed to fetch card details", details: error });
-    }
-  }
-);
+		res.status(200).json({
+			id: cardDoc.id,
+			name: card.name,
+			description: card.description,
+		});
+	} catch (error) {
+		res.status(500).json({ error: 'Failed to fetch card details', details: error });
+	}
+});
 /**
  * @swagger
  * /boards/{boardId}/cards/user/{user_id}:
@@ -234,42 +212,40 @@ router.get(
  *         description: Failed to fetch cards
  */
 router.get(
-  "/user/:user_id",
-  authenticate,
-  checkBoardAccess,
-  async (req: Request, res: Response) => {
-    const { boardId, user_id } = req.params;
+	'/user/:user_id',
+	authenticate,
+	checkBoardAccess,
+	async (req: Request, res: Response) => {
+		const { boardId, user_id } = req.params;
 
-    try {
-      const snapshot = await db
-        .collection("cards")
-        .where("boardId", "==", boardId)
-        .where("userId", "==", user_id)
-        .get();
+		try {
+			const snapshot = await db
+				.collection('cards')
+				.where('boardId', '==', boardId)
+				.where('userId', '==', user_id)
+				.get();
 
-      const cards = snapshot.docs.map((doc) => {
-        const data = doc.data();
-        return {
-          id: doc.id,
-          name: data.name,
-          description: data.description,
-          tasks_count: data.tasks_count || 0,
-          list_member: data.list_member || [],
-          createdAt: (() => {
-            if ("toMillis" in data.createdAt) return data.createdAt.toMillis();
-            if (data.createdAt instanceof Date) return data.createdAt.getTime();
-            return 0;
-          })(),
-        };
-      });
+			const cards = snapshot.docs.map((doc) => {
+				const data = doc.data();
+				return {
+					id: doc.id,
+					name: data.name,
+					description: data.description,
+					tasks_count: data.tasks_count || 0,
+					list_member: data.list_member || [],
+					createdAt: (() => {
+						if ('toMillis' in data.createdAt) return data.createdAt.toMillis();
+						if (data.createdAt instanceof Date) return data.createdAt.getTime();
+						return 0;
+					})(),
+				};
+			});
 
-      res.status(200).json(cards);
-    } catch (error) {
-      res
-        .status(500)
-        .json({ error: "Failed to fetch cards by user", details: error });
-    }
-  }
+			res.status(200).json(cards);
+		} catch (error) {
+			res.status(500).json({ error: 'Failed to fetch cards by user', details: error });
+		}
+	}
 );
 
 /**
@@ -306,50 +282,45 @@ router.get(
  *       500:
  *         description: Failed to update card
  */
-router.put(
-  "/:id",
-  authenticate,
-  checkBoardAccess,
-  async (req: Request, res: Response) => {
-    const { boardId, id } = req.params;
-    const updateData = req.body;
+router.put('/:id', authenticate, checkBoardAccess, async (req: Request, res: Response) => {
+	const { boardId, id } = req.params;
+	const updateData = req.body;
 
-    try {
-      const cardRef = db.collection("cards").doc(id);
-      const cardDoc = await cardRef.get();
+	try {
+		const cardRef = db.collection('cards').doc(id);
+		const cardDoc = await cardRef.get();
 
-      if (!cardDoc.exists) {
-        res.status(404).json({ error: "Card not found" });
-        return 
-      }
+		if (!cardDoc.exists) {
+			res.status(404).json({ error: 'Card not found' });
+			return;
+		}
 
-      const card = cardDoc.data()!;
-      if (card.boardId !== boardId) {
-        res.status(400).json({ error: "Card does not belong to this board" });
-        return 
-      }
+		const card = cardDoc.data()!;
+		if (card.boardId !== boardId) {
+			res.status(400).json({ error: 'Card does not belong to this board' });
+			return;
+		}
 
-      // Prevent changing boardId or userId accidentally
-      if (updateData.boardId || updateData.userId) {
-        delete updateData.boardId;
-        delete updateData.userId;
-      }
+		// Prevent changing boardId or userId accidentally
+		if (updateData.boardId || updateData.userId) {
+			delete updateData.boardId;
+			delete updateData.userId;
+		}
 
-      await cardRef.update(updateData);
+		await cardRef.update(updateData);
 
-      const updatedDoc = await cardRef.get();
-      const updatedCard = updatedDoc.data();
+		const updatedDoc = await cardRef.get();
+		const updatedCard = updatedDoc.data();
 
-      res.status(200).json({
-        id: updatedDoc.id,
-        name: updatedCard?.name,
-        description: updatedCard?.description,
-      });
-    } catch (error) {
-      res.status(500).json({ error: "Failed to update card", details: error });
-    }
-  }
-);
+		res.status(200).json({
+			id: updatedDoc.id,
+			name: updatedCard?.name,
+			description: updatedCard?.description,
+		});
+	} catch (error) {
+		res.status(500).json({ error: 'Failed to update card', details: error });
+	}
+});
 
 /**
  * @swagger
@@ -378,35 +349,30 @@ router.put(
  *       500:
  *         description: Failed to delete card
  */
-router.delete(
-  "/:id",
-  authenticate,
-  checkBoardAccess,
-  async (req: Request, res: Response) => {
-    const { boardId, id } = req.params;
+router.delete('/:id', authenticate, checkBoardAccess, async (req: Request, res: Response) => {
+	const { boardId, id } = req.params;
 
-    try {
-      const cardRef = db.collection("cards").doc(id);
-      const cardDoc = await cardRef.get();
+	try {
+		const cardRef = db.collection('cards').doc(id);
+		const cardDoc = await cardRef.get();
 
-      if (!cardDoc.exists) {
-        res.status(404).json({ error: "Card not found" });
-        return 
-      }
+		if (!cardDoc.exists) {
+			res.status(404).json({ error: 'Card not found' });
+			return;
+		}
 
-      const card = cardDoc.data()!;
-      if (card.boardId !== boardId) {
-        res.status(400).json({ error: "Card does not belong to this board" });
-        return 
-      }
+		const card = cardDoc.data()!;
+		if (card.boardId !== boardId) {
+			res.status(400).json({ error: 'Card does not belong to this board' });
+			return;
+		}
 
-      await cardRef.delete();
-      res.status(204).send();
-    } catch (error) {
-      res.status(500).json({ error: "Failed to delete card", details: error });
-    }
-  }
-);
-router.use("/:id/tasks", taskRoute);
+		await cardRef.delete();
+		res.status(204).send();
+	} catch (error) {
+		res.status(500).json({ error: 'Failed to delete card', details: error });
+	}
+});
+router.use('/:id/tasks', taskRoute);
 
 export default router;

@@ -5,11 +5,11 @@
  *   description: Task management within cards and boards
  */
 
-import { Router, Request, Response } from "express";
-import admin from "firebase-admin";
-import { authenticate } from "../middleware/authMiddleware";
-import { checkBoardAccess } from "../middleware/checkBoardAccess";
-import { db } from "../firebase";
+import { Router, Request, Response } from 'express';
+import admin from 'firebase-admin';
+import { authenticate } from '../middleware/authMiddleware';
+import { checkBoardAccess } from '../middleware/checkBoardAccess';
+import { db } from '../firebase';
 
 const router = Router({ mergeParams: true });
 
@@ -36,32 +36,24 @@ const router = Router({ mergeParams: true });
  *       200:
  *         description: List of tasks
  */
-router.get(
-  "/",
-  authenticate,
-  checkBoardAccess,
-  async (req: Request, res: Response) => {
-    const { id: cardId } = req.params;
+router.get('/', authenticate, checkBoardAccess, async (req: Request, res: Response) => {
+	const { id: cardId } = req.params;
 
-    const snapshot = await db
-      .collection("tasks")
-      .where("cardId", "==", cardId)
-      .get();
+	const snapshot = await db.collection('tasks').where('cardId', '==', cardId).get();
 
-    const tasks = snapshot.docs.map((doc) => {
-      const data = doc.data();
-      return {
-        id: doc.id,
-        cardId: data.cardId,
-        title: data.title,
-        description: data.description,
-        status: data.status,
-      };
-    });
+	const tasks = snapshot.docs.map((doc) => {
+		const data = doc.data();
+		return {
+			id: doc.id,
+			cardId: data.cardId,
+			title: data.title,
+			description: data.description,
+			status: data.status,
+		};
+	});
 
-    res.status(200).json(tasks);
-  }
-);
+	res.status(200).json(tasks);
+});
 
 /**
  * @swagger
@@ -100,40 +92,35 @@ router.get(
  *       201:
  *         description: Task created successfully
  */
-router.post(
-  "/",
-  authenticate,
-  checkBoardAccess,
-  async (req: Request, res: Response) => {
-    const { id: cardId, boardId } = req.params;
-    const { title, description, status } = req.body;
+router.post('/', authenticate, checkBoardAccess, async (req: Request, res: Response) => {
+	const { id: cardId, boardId } = req.params;
+	const { title, description, status } = req.body;
 
-    if (!title || !description || !status) {
-      res.status(400).json({ error: "Missing fields" });
-      return;
-    }
+	if (!title || !description || !status) {
+		res.status(400).json({ error: 'Missing fields' });
+		return;
+	}
 
-    const docRef = await db.collection("tasks").add({
-      cardId,
-      boardId,
-      title,
-      description,
-      status,
-      ownerId: req.uid,
-      assignedUserIds: [],
-      createdAt: admin.firestore.Timestamp.now(),
-    });
+	const docRef = await db.collection('tasks').add({
+		cardId,
+		boardId,
+		title,
+		description,
+		status,
+		ownerId: req.uid,
+		assignedUserIds: [],
+		createdAt: admin.firestore.Timestamp.now(),
+	});
 
-    res.status(201).json({
-      id: docRef.id,
-      cardId,
-      ownerId: req.uid,
-      title,
-      description,
-      status,
-    });
-  }
-);
+	res.status(201).json({
+		id: docRef.id,
+		cardId,
+		ownerId: req.uid,
+		title,
+		description,
+		status,
+	});
+});
 
 /**
  * @swagger
@@ -163,34 +150,29 @@ router.post(
  *       200:
  *         description: Task details
  */
-router.get(
-  "/:taskId",
-  authenticate,
-  checkBoardAccess,
-  async (req: Request, res: Response) => {
-    const { taskId, id: cardId } = req.params;
+router.get('/:taskId', authenticate, checkBoardAccess, async (req: Request, res: Response) => {
+	const { taskId, id: cardId } = req.params;
 
-    const taskDoc = await db.collection("tasks").doc(taskId).get();
-    if (!taskDoc.exists) {
-      res.status(404).json({ error: "Task not found" });
-      return;
-    }
+	const taskDoc = await db.collection('tasks').doc(taskId).get();
+	if (!taskDoc.exists) {
+		res.status(404).json({ error: 'Task not found' });
+		return;
+	}
 
-    const task = taskDoc.data()!;
-    if (task.cardId !== cardId) {
-      res.status(400).json({ error: "Task does not belong to this card" });
-      return;
-    }
+	const task = taskDoc.data()!;
+	if (task.cardId !== cardId) {
+		res.status(400).json({ error: 'Task does not belong to this card' });
+		return;
+	}
 
-    res.status(200).json({
-      id: taskDoc.id,
-      cardId: task.cardId,
-      title: task.title,
-      description: task.description,
-      status: task.status,
-    });
-  }
-);
+	res.status(200).json({
+		id: taskDoc.id,
+		cardId: task.cardId,
+		title: task.title,
+		description: task.description,
+		status: task.status,
+	});
+});
 
 /**
  * @swagger
@@ -210,39 +192,34 @@ router.get(
  *       200:
  *         description: Task updated
  */
-router.put(
-  "/:taskId",
-  authenticate,
-  checkBoardAccess,
-  async (req: Request, res: Response) => {
-    const { taskId, id: cardId } = req.params;
-    const updates = req.body;
+router.put('/:taskId', authenticate, checkBoardAccess, async (req: Request, res: Response) => {
+	const { taskId, id: cardId } = req.params;
+	const updates = req.body;
 
-    const ref = db.collection("tasks").doc(taskId);
-    const doc = await ref.get();
-    if (!doc.exists) {
-      res.status(404).json({ error: "Task not found" });
-      return;
-    }
+	const ref = db.collection('tasks').doc(taskId);
+	const doc = await ref.get();
+	if (!doc.exists) {
+		res.status(404).json({ error: 'Task not found' });
+		return;
+	}
 
-    const task = doc.data()!;
-    if (task.cardId !== cardId) {
-      res.status(400).json({ error: "Mismatch card ID" });
-      return;
-    }
+	const task = doc.data()!;
+	if (task.cardId !== cardId) {
+		res.status(400).json({ error: 'Mismatch card ID' });
+		return;
+	}
 
-    delete updates.cardId;
-    delete updates.boardId;
-    delete updates.ownerId;
+	delete updates.cardId;
+	delete updates.boardId;
+	delete updates.ownerId;
 
-    await ref.update(updates);
+	await ref.update(updates);
 
-    res.status(200).json({
-      id: ref.id,
-      cardId: task.cardId,
-    });
-  }
-);
+	res.status(200).json({
+		id: ref.id,
+		cardId: task.cardId,
+	});
+});
 
 /**
  * @swagger
@@ -256,30 +233,25 @@ router.put(
  *       204:
  *         description: Task deleted
  */
-router.delete(
-  "/:taskId",
-  authenticate,
-  checkBoardAccess,
-  async (req: Request, res: Response) => {
-    const { taskId, id: cardId } = req.params;
+router.delete('/:taskId', authenticate, checkBoardAccess, async (req: Request, res: Response) => {
+	const { taskId, id: cardId } = req.params;
 
-    const docRef = db.collection("tasks").doc(taskId);
-    const doc = await docRef.get();
-    if (!doc.exists) {
-      res.status(404).json({ error: "Task not found" });
-      return;
-    }
+	const docRef = db.collection('tasks').doc(taskId);
+	const doc = await docRef.get();
+	if (!doc.exists) {
+		res.status(404).json({ error: 'Task not found' });
+		return;
+	}
 
-    const task = doc.data()!;
-    if (task.cardId !== cardId) {
-      res.status(400).json({ error: "Card mismatch" });
-      return;
-    }
+	const task = doc.data()!;
+	if (task.cardId !== cardId) {
+		res.status(400).json({ error: 'Card mismatch' });
+		return;
+	}
 
-    await docRef.delete();
-    res.status(204).send();
-  }
-);
+	await docRef.delete();
+	res.status(204).send();
+});
 
 /**
  * @swagger
@@ -303,26 +275,26 @@ router.delete(
  *         description: Member assigned
  */
 router.post(
-  "/:taskId/assign",
-  authenticate,
-  checkBoardAccess,
-  async (req: Request, res: Response) => {
-    const { taskId } = req.params;
-    const { memberId } = req.body;
+	'/:taskId/assign',
+	authenticate,
+	checkBoardAccess,
+	async (req: Request, res: Response) => {
+		const { taskId } = req.params;
+		const { memberId } = req.body;
 
-    const taskRef = db.collection("tasks").doc(taskId);
-    const doc = await taskRef.get();
-    if (!doc.exists) {
-      res.status(404).json({ error: "Task not found" });
-      return;
-    }
+		const taskRef = db.collection('tasks').doc(taskId);
+		const doc = await taskRef.get();
+		if (!doc.exists) {
+			res.status(404).json({ error: 'Task not found' });
+			return;
+		}
 
-    await taskRef.update({
-      assignedUserIds: admin.firestore.FieldValue.arrayUnion(memberId),
-    });
+		await taskRef.update({
+			assignedUserIds: admin.firestore.FieldValue.arrayUnion(memberId),
+		});
 
-    res.status(201).json({ taskId, memberId });
-  }
+		res.status(201).json({ taskId, memberId });
+	}
 );
 
 /**
@@ -338,26 +310,26 @@ router.post(
  *         description: List of assigned members
  */
 router.get(
-  "/:taskId/assign",
-  authenticate,
-  checkBoardAccess,
-  async (req: Request, res: Response) => {
-    const { taskId } = req.params;
+	'/:taskId/assign',
+	authenticate,
+	checkBoardAccess,
+	async (req: Request, res: Response) => {
+		const { taskId } = req.params;
 
-    const doc = await db.collection("tasks").doc(taskId).get();
-    if (!doc.exists) {
-      res.status(404).json({ error: "Task not found" });
-      return;
-    }
+		const doc = await db.collection('tasks').doc(taskId).get();
+		if (!doc.exists) {
+			res.status(404).json({ error: 'Task not found' });
+			return;
+		}
 
-    const data = doc.data()!;
-    const members = (data.assignedUserIds || []).map((memberId: string) => ({
-      taskId,
-      memberId,
-    }));
+		const data = doc.data()!;
+		const members = (data.assignedUserIds || []).map((memberId: string) => ({
+			taskId,
+			memberId,
+		}));
 
-    res.status(200).json(members);
-  }
+		res.status(200).json(members);
+	}
 );
 
 /**
@@ -373,21 +345,21 @@ router.get(
  *         description: Member removed
  */
 router.delete(
-  "/:taskId/assign/:memberId",
-  authenticate,
-  checkBoardAccess,
-  async (req: Request, res: Response) => {
-    const { taskId, memberId } = req.params;
+	'/:taskId/assign/:memberId',
+	authenticate,
+	checkBoardAccess,
+	async (req: Request, res: Response) => {
+		const { taskId, memberId } = req.params;
 
-    await db
-      .collection("tasks")
-      .doc(taskId)
-      .update({
-        assignedUserIds: admin.firestore.FieldValue.arrayRemove(memberId),
-      });
+		await db
+			.collection('tasks')
+			.doc(taskId)
+			.update({
+				assignedUserIds: admin.firestore.FieldValue.arrayRemove(memberId),
+			});
 
-    res.status(204).send();
-  }
+		res.status(204).send();
+	}
 );
 
 export default router;

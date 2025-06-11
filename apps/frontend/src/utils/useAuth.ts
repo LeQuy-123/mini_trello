@@ -1,42 +1,33 @@
-import type { RootState } from "@store/index";
-import { useAppDispatch, useAppSelector } from "@store/hooks";
-import {
-  login,
-  register,
-  getProfile,
-  logout,
-  resetStatus,
-} from "@store/authSlice";
+import type { RootState } from '@store/index';
+import { useAppDispatch, useAppSelector } from '@store/hooks';
+import { login, register, getProfile, logout, resetStatus } from '@store/authSlice';
 
 export function useAuth() {
-  const dispatch = useAppDispatch();
+	const dispatch = useAppDispatch();
 
-  const {
-    user,
-    token,
-    login: loginStatus,
-    register: registerStatus,
-    profile: profileStatus,
-  } = useAppSelector((state: RootState) => state.auth);
+	const {
+		user,
+		token,
+		login: loginStatus,
+		register: registerStatus,
+		profile: profileStatus,
+	} = useAppSelector((state: RootState) => state.auth);
 
-  return {
-    user,
-    token,
-    isAuthenticated: !!user && !!token,
+	return {
+		user,
+		token,
+		isAuthenticated: !!user && !!token,
 
-    loginStatus,
-    registerStatus,
-    profileStatus,
-    isLoading:
-      loginStatus.loading || registerStatus.loading || profileStatus.loading,
+		loginStatus,
+		registerStatus,
+		profileStatus,
+		isLoading: loginStatus.loading || registerStatus.loading || profileStatus.loading,
 
-    login: (payload: { email: string; password: string }) =>
-      dispatch(login(payload)),
-    register: (payload: { name: string; email: string; password: string }) =>
-      dispatch(register(payload)),
-    getProfile: () => dispatch(getProfile()),
-    logout: () => dispatch(logout()),
-    resetStatus: () => dispatch(resetStatus()),
-  
-  };
+		login: (payload: { email: string; password: string }) => dispatch(login(payload)),
+		register: (payload: { name: string; email: string; password: string }) =>
+			dispatch(register(payload)),
+		getProfile: () => dispatch(getProfile()),
+		logout: () => dispatch(logout()),
+		resetStatus: () => dispatch(resetStatus()),
+	};
 }
