@@ -1,7 +1,8 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import TaskService, { type Task, type CreateTaskBody } from '@services/taskService';
-import { getDefaultAsyncState } from '@utils/helper';
+import { getDefaultAsyncState, showError, showSuccess } from '@utils/helper';
 import type { AsyncStatus } from '@utils/type';
+import { decrementTaskCount, incrementTaskCount } from './cardSlice';
 
 interface TaskState {
 	tasksByCardId: Record<string, Task[]>;
@@ -30,6 +31,7 @@ export const getTasks = createAsyncThunk(
 	async ({ boardId, cardId }: { boardId: string; cardId: string }, thunkAPI) => {
 		try {
 			const tasks = await TaskService.getTasks({ boardId, cardId });
+
 			return { cardId, tasks };
 		} catch (error: any) {
 			return thunkAPI.rejectWithValue(error?.message || 'Failed to fetch tasks');
@@ -58,8 +60,11 @@ export const createTask = createAsyncThunk(
 	) => {
 		try {
 			const task = await TaskService.createTask({ boardId, cardId, data });
+			thunkAPI.dispatch(incrementTaskCount(cardId));
 			return { cardId, task };
 		} catch (error: any) {
+			console.log("🚀 ~ error:", error)
+			showError(error);
 			return thunkAPI.rejectWithValue(error?.message || 'Failed to create task');
 		}
 	}
@@ -80,8 +85,11 @@ export const deleteTask = createAsyncThunk(
 	) => {
 		try {
 			await TaskService.deleteTask({ boardId, cardId, taskId });
+			thunkAPI.dispatch(decrementTaskCount(cardId));
+			showSuccess('Task deleted successfully');
 			return { cardId, taskId };
 		} catch (error: any) {
+			showError(error)
 			return thunkAPI.rejectWithValue(error?.message || 'Failed to delete task');
 		}
 	}
@@ -158,7 +166,9 @@ const taskSlice = createSlice({
 						const tasks = state.tasksByCardId[cardId] || [];
 						const index = tasks.findIndex((t) => t.id === task.id);
 						if (index !== -1) {
-							tasks[index] = task;
+							const updatedTasks = [...tasks];
+							updatedTasks[index] = task;
+							state.tasksByCardId[cardId] = updatedTasks;
 						}
 					}
 					if (type === 'delete') {

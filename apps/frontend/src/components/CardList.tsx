@@ -30,7 +30,6 @@ export default function CardList({
 		})
 	}, [])
 	const [selectedCard, setSelectedCard] = useState<null | CardType>(null);
-	console.log("🚀 ~ useEffect ~ board:", board)
 
 	const [open, setOpen] = useState(false);
 	const handleClose = () => setOpen(false);
@@ -58,13 +57,14 @@ export default function CardList({
 
 	return (
 		<>
-			<Stack direction='row' gap={2} sx={{ mt: 2 }}>
+			<Stack direction='row' gap={2} sx={{ mt: 2 }} alignItems={'flex-start'}>
 				{getCardsStatus.loading
 					? renderCardSkeletons()
 					: cards?.map((item) => (
 						<CardComponent
 							key={item.id}
 							card={item}
+							board={board}
 							onClickEdit={() => handleEdit(item)}
 							onClickDelete={() => handleDelete(item)}
 						/>

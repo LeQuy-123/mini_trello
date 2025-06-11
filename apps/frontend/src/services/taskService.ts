@@ -7,7 +7,7 @@ export interface Task {
 	boardId: string;
 	title: string;
 	description: string;
-	status: string;
+	status: 'new' | 'wip' | 'reject' | 'complete';
 	ownerId: string;
 	assignedUserIds: string[];
 }
@@ -28,7 +28,7 @@ class TaskService {
 		boardId: string;
 		cardId: string;
 	}): Promise<Task[]> {
-		const res = await apiClient.get<Task[]>(`/boards/${boardId}/cards/${cardId}`);
+		const res = await apiClient.get<Task[]>(`/boards/${boardId}/cards/${cardId}/tasks`);
 		return res.data;
 	}
 	static async createTask({
@@ -40,7 +40,7 @@ class TaskService {
 		cardId: string;
 		data: CreateTaskBody;
 	}): Promise<Task> {
-		const res = await apiClient.post<Task>(`/boards/${boardId}/cards/${cardId}`, data);
+		const res = await apiClient.post<Task>(`/boards/${boardId}/cards/${cardId}/tasks`, data);
 		return res.data;
 	}
 	static async getTask({

@@ -1,4 +1,4 @@
-import { createSlice } from '@reduxjs/toolkit';
+import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import CardService, { type  Card } from '@services/cardService';
 import { showError, showSuccess } from '@utils/helper';
@@ -144,7 +144,19 @@ const cardSlice = createSlice({
 			state.create = getDefaultAsyncState();
 			state.update = getDefaultAsyncState();
 			state.remove = getDefaultAsyncState();
-		}
+		},
+		incrementTaskCount: (state, action: PayloadAction<string>) => {
+			const card = state.cards.find((c) => c.id === action.payload);
+			if (card) {
+				card.tasksCount = (card.tasksCount ?? 0) + 1;
+			}
+		},
+		decrementTaskCount: (state, action: PayloadAction<string>) => {
+			const card = state.cards.find((c) => c.id === action.payload);
+			if (card) {
+				card.tasksCount = Math.max((card.tasksCount ?? 1) - 1, 0);
+			}
+		},
 	},
 	extraReducers: (builder) => {
 		const handleAsync = <K extends keyof Omit<CardState, 'cards' | 'card'>>(
@@ -190,5 +202,5 @@ const cardSlice = createSlice({
 	},
 });
 
-export const { resetCardStatus, clearCards } = cardSlice.actions;
+export const { resetCardStatus, clearCards, incrementTaskCount, decrementTaskCount } = cardSlice.actions;
 export default cardSlice.reducer;

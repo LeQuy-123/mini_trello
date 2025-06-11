@@ -60,6 +60,7 @@ router.get('/', authenticate, checkBoardAccess, async (req: Request, res: Respon
 				id: doc.id,
 				name: data.name,
 				description: data.description,
+				...data,
 			};
 		});
 
