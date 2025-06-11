@@ -26,7 +26,6 @@ export default function CustomTextField(props: Props) {
                     {...field}
                     fullWidth
                     label={label || name || ''}
-                    type="email"
                     sx={{ height: 62 }}
                     margin="normal"
                     {...rest}
