@@ -6,6 +6,6 @@ export interface Card {
 	boardId: string;
 	createdAt: Timestamp | Date | null;
 	userId: string;
-	list_member?: string[];
-	tasks_count?: number;
+	listMember?: string[];
+	tasksCount?: number;
 }

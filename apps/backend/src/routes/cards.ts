@@ -122,8 +122,8 @@ router.post('/', authenticate, checkBoardAccess, async (req: Request, res: Respo
 			boardId,
 			userId: req.uid,
 			createdAt: Timestamp.now(),
-			list_member: [],
-			tasks_count: 0,
+			listMember: [],
+			tasksCount: 0,
 		});
 
 		res.status(201).json({ id: docRef.id, name, description });
@@ -231,8 +231,8 @@ router.get(
 					id: doc.id,
 					name: data.name,
 					description: data.description,
-					tasks_count: data.tasks_count || 0,
-					list_member: data.list_member || [],
+					tasksCount: data.tasksCount || 0,
+					listMember: data.listMember || [],
 					createdAt: (() => {
 						if ('toMillis' in data.createdAt) return data.createdAt.toMillis();
 						if (data.createdAt instanceof Date) return data.createdAt.getTime();

@@ -30,7 +30,6 @@ export default function BoardDetail() {
 				<Typography
 					variant="body2"
 					color="text.secondary"
-
 				>
 					{boardDetail?.description}
 				</Typography>

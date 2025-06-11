@@ -64,6 +64,7 @@ router.post('/', authenticate, async (req: Request, res: Response) => {
 			description,
 			userId: req.uid,
 			createdAt: Timestamp.now(),
+			cardCount: 0,
 			members: [], // empty array to save user who being invited to this boards
 		});
 
@@ -291,16 +292,28 @@ router.put('/:id', authenticate, async (req: Request, res: Response) => {
  *         description: Board not found
  */
 router.delete('/:id', authenticate, async (req: Request, res: Response) => {
-	const docRef = db.collection('boards').doc(req.params.id);
-	const doc = await docRef.get();
+	const boardId = req.params.id;
+	const boardRef = db.collection('boards').doc(boardId);
+	const boardDoc = await boardRef.get();
 
-	if (!doc.exists || doc.data()?.userId !== req.uid) {
+	if (!boardDoc.exists || boardDoc.data()?.userId !== req.uid) {
 		res.sendStatus(404);
-		return;
+		return
 	}
-
-	await docRef.delete();
-	res.sendStatus(204);
+	try {
+		const batch = db.batch();
+		const tasksSnap = await db.collection('tasks').where('boardId', '==', boardId).get();
+		tasksSnap.forEach((doc) => batch.delete(doc.ref));
+		const cardsSnap = await db.collection('cards').where('boardId', '==', boardId).get()
+		cardsSnap.forEach((doc) => batch.delete(doc.ref));
+		batch.delete(boardRef);
+		await batch.commit();
+		res.sendStatus(204);
+		return
+	} catch (error) {
+		console.error('Failed to delete board with related cards and tasks:', error);
+		res.status(500).json({ error: 'Failed to delete board and related items.' });
+	}
 });
 
 router.use('/:boardId/cards', cardRoutes);
