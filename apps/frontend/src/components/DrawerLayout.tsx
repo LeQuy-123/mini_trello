@@ -14,6 +14,7 @@ import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import { useState } from 'react';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import UserList from './UserList';
+import { UserInvitationModal } from './UserInvitationModal';
 const drawerWidth = 240;
 
 const Main = styled('main', { shouldForwardProp: (prop) => prop !== 'open' })<{ open?: boolean }>(
@@ -53,14 +54,12 @@ export default function DrawerLayout({
 	const theme = useTheme();
 	const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 	const [open, setOpen] = useState(!isMobile);
-
-
-
+	const [openUserModal, setOpenUserModal] = useState(false);
 
 	const handleDrawerOpen = () => setOpen(true);
 	const handleDrawerClose = () => setOpen(false);
 	const handleAddUser = () => {
-
+		setOpenUserModal(true)
 	}
 	return (
 		<Box sx={{ display: 'flex'}}>
@@ -112,6 +111,10 @@ export default function DrawerLayout({
 			<Main open={open}>
 				{children}
 			</Main>
+			<UserInvitationModal
+				open={openUserModal}
+				onClose={() => setOpenUserModal(false)}
+			/>
 		</Box>
 	);
 }

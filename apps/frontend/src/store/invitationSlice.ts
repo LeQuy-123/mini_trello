@@ -17,7 +17,7 @@ export const getInvitations = createAsyncThunk('invitations/getAll', async (_, t
 export const sendInvitation = createAsyncThunk(
 	'invitations/send',
 	async (
-		payload: { boardId: string; data: { member_id: string; email_member?: string } },
+		payload: { boardId: string; data: { memberId: string; emailMember?: string } },
 		thunkAPI
 	) => {
 		try {
@@ -48,10 +48,10 @@ export const respondToInvitation = createAsyncThunk(
 	}
 );
 
-export const getUser = createAsyncThunk('invitations/getUsers', async (boardId: string, thunkAPI) => {
-	console.log("🚀 ~ getUser ~ boardId:", boardId)
+
+export const getUser = createAsyncThunk('invitations/getUsers', async (_, thunkAPI) => {
 	try {
-		const res = await InvitationService.getUser()
+		const res = await InvitationService.getUser();
 		return res;
 	} catch (error: any) {
 		return thunkAPI.rejectWithValue(error?.message || 'Failed to fetch user');

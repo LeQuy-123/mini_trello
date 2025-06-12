@@ -205,14 +205,32 @@ router.get('/', authenticate, async (req: Request, res: Response) => {
  *         description: Board not found
  */
 router.get('/:id', authenticate, async (req: Request, res: Response) => {
-	const doc = await db.collection('boards').doc(req.params.id).get();
-	if (!doc.exists || doc.data()?.userId !== req.uid) {
-		res.sendStatus(404);
-		return;
-	}
+	try {
+		const docRef = db.collection('boards').doc(req.params.id);
+		const doc = await docRef.get();
 
-	res.status(200).json({ id: doc.id, ...doc.data() });
+		if (!doc.exists) {
+			res.sendStatus(404);
+			return
+		}
+
+		const data = doc.data();
+
+		const isOwner = data?.userId === req.uid;
+		const isMember = Array.isArray(data?.members) && data.members.includes(req.uid);
+
+		if (!isOwner && !isMember) {
+			res.sendStatus(403);
+			return
+		}
+
+		res.status(200).json({ id: doc.id, ...data });
+	} catch (error) {
+		console.error('Error getting board:', error);
+		res.status(500).json({ message: 'Internal server error' });
+	}
 });
+
 
 /**
  * @swagger

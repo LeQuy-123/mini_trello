@@ -12,7 +12,6 @@ import { useParams } from 'react-router-dom';
 
 export default function UserList() {
 	const { id } = useParams<{ id: string }>();
-	// const { getUser, users } = useInvitation();
 	const {getUsers, users} = useBoard();
 	useEffect(() => {
 		if (id) getUsers({ id });

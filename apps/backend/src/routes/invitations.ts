@@ -3,6 +3,7 @@ import { db } from '../firebase';
 import { v4 as uuidv4 } from 'uuid';
 import admin from 'firebase-admin';
 import { authenticate } from '../middleware/authMiddleware';
+import { Invitation } from '../types/User';
 
 const router = Router();
 
@@ -48,7 +49,7 @@ const router = Router();
  *         description: Unauthorized
  */
 router.post('/:boardId', authenticate, async (req: Request, res: Response) => {
-	const { member_id, email_member } = req.body;
+	const { memberId, email } = req.body;
 	const boardId = req.params.boardId;
 	const inviteId = uuidv4();
 
@@ -71,8 +72,8 @@ router.post('/:boardId', authenticate, async (req: Request, res: Response) => {
 			inviteId,
 			boardId,
 			boardOwnerId,
-			memberId: member_id,
-			email: email_member || null,
+			memberId: memberId,
+			email: email || null,
 			status: 'pending',
 			createdAt: Date.now(),
 		});
@@ -156,18 +157,53 @@ router.post('/:boardId/respond', authenticate, async (req: Request, res: Respons
  *         description: List of invitations
  */
 router.get('/', authenticate, async (req: Request, res: Response) => {
-	const [sentSnap, receivedSnap] = await Promise.all([
-		db.collection('invitations').where('boardOwnerId', '==', req.uid).get(),
-		db.collection('invitations').where('memberId', '==', req.uid).get(),
-	]);
+	try {
+		const [sentSnap, receivedSnap] = await Promise.all([
+			db.collection('invitations').where('boardOwnerId', '==', req.uid).get(),
+			db.collection('invitations').where('memberId', '==', req.uid).get(),
+		]);
 
-	const sent = sentSnap.docs.map((doc) => ({ type: 'sent', ...doc.data() }));
-	const received = receivedSnap.docs.map((doc) => ({
-		type: 'received',
-		...doc.data(),
-	}));
+		const sent = sentSnap.docs.map((doc) => {
+			const data = doc.data() as Invitation;
+			return { type: 'sent', id: doc.id, ...data };
+		});
 
-	res.status(200).json([...sent, ...received]);
+		const received = receivedSnap.docs.map((doc) => {
+			const data = doc.data() as Invitation;
+			return { type: 'received', id: doc.id, ...data };
+		});
+		const invitations = [...sent, ...received];
+
+		const userIds = new Set<string>();
+		invitations.forEach((inv) => {
+			userIds.add(inv.boardOwnerId);
+			userIds.add(inv.memberId);
+		});
+
+		const userDocs = await db.getAll(
+			...[...userIds].map((uid) => db.collection('users').doc(uid))
+		);
+
+		const userMap = new Map<string, { name: string; email: string }>();
+		userDocs.forEach((doc) => {
+			if (doc.exists) {
+				const { name, email } = doc.data()!;
+				userMap.set(doc.id, { name, email });
+			}
+		});
+
+		const enrichedInvitations = invitations.map((inv) => ({
+			...inv,
+			sender: userMap.get(inv.boardOwnerId) || null,
+			recipient: userMap.get(inv.memberId) || null,
+		}));
+
+		res.status(200).json(enrichedInvitations);
+	} catch (err) {
+		console.error('Failed to fetch invitations:', err);
+		res.status(500).json({ error: 'Failed to fetch invitations', details: err });
+	}
 });
+
 
 export default router;

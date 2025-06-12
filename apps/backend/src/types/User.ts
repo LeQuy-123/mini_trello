@@ -5,3 +5,10 @@ export interface User {
 	password: string;
 	createdAt: FirebaseFirestore.Timestamp | Date;
 }
+
+export type Invitation = {
+	boardId: string;
+	boardOwnerId: string;
+	memberId: string;
+	createdAt?: FirebaseFirestore.Timestamp;
+};

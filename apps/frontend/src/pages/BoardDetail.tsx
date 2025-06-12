@@ -33,7 +33,7 @@ export default function BoardDetail() {
 	if (getDetailBoardsStatus.error  ) return <ErrorPage message={getDetailBoardsStatus.error} />;
 
 	return (
-		<DrawerLayout boardDetail={boardDetail}>
+		<DrawerLayout>
 			<Box sx={{ pl: 2, pt: 1 }}>
 				<Box>
 					<Typography variant="h6" gutterBottom>

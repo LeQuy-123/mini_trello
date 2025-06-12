@@ -1,20 +1,22 @@
 import apiClient from './apiClient';
+export type InvitationStatus = 'pending' | 'accepted' | 'rejected';
 
-export interface Invitation {
-	inviteId: string;
+export type Invitation = {
+	id: string;
 	boardId: string;
 	boardOwnerId: string;
 	memberId: string;
-	email?: string | null;
-	status: 'pending' | 'accepted' | 'declined';
+	type: 'send' | 'recivie';
+	status: InvitationStatus;
 	createdAt: number;
-	type?: 'sent' | 'received';
-}
+	sender: { name: string; email: string };
+	recipient: { name: string; email: string };
+};
 
 class InvitationService {
 	static async sendInvitation(
 		boardId: string,
-		data: { member_id: string; email_member?: string }
+		data: { memberId: string; emailMember?: string }
 	): Promise<{ success: true; inviteId: string }> {
 		const res = await apiClient.post(`/invitations/${boardId}`, data);
 		return res.data;

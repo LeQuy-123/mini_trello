@@ -28,13 +28,13 @@ export const useInvitation = () => {
 		respondToInvitationStatus,
 		getUserStatus,
 		getInvitations: () => dispatch(getInvitations()),
-		sendInvitation: (boardId: string, data: { member_id: string; email_member?: string }) =>
+		sendInvitation: (boardId: string, data: { memberId: string; emailMember?: string }) =>
 			dispatch(sendInvitation({ boardId, data })),
 		respondToInvitation: (
 			boardId: string,
 			data: { invite_id: string; status: 'accepted' | 'declined' }
 		) => dispatch(respondToInvitation({ boardId, data })),
-		getUser: (boardId: string) => dispatch(getUser(boardId)),
+		getUser: () => dispatch(getUser()),
 		resetInvitationStatus: () => dispatch(resetInvitationStatus()),
 	};
 };

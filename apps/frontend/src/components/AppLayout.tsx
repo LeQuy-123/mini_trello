@@ -12,14 +12,15 @@ import {
 	useMediaQuery,
 	Menu,
 	MenuItem,
+	Button,
 } from '@mui/material';
-import NotificationsIcon from '@mui/icons-material/Notifications';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import { useTheme } from '@mui/material/styles';
 import { useAuth } from '@utils/useAuth';
 import { useCustomTheme } from '@utils/useCustomTheme';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
+import InvitationDropdown from './InvitationDropdown';
 
 const tabRoutes = [
 	{ label: 'Workspace', path: '/boards' },
@@ -34,7 +35,7 @@ export default function AppLayout() {
 	const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 	const location = useLocation();
 	const navigate = useNavigate();
-
+	const { logout } = useAuth()
 	const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 	const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
 		setAnchorEl(event.currentTarget);
@@ -116,11 +117,16 @@ export default function AppLayout() {
 										/>
 									</MenuItem>
 									<MenuItem>
-										<NotificationsIcon sx={{ mr: 1 }} />
-										Notifications
+										<InvitationDropdown label='Invitaions'/>
 									</MenuItem>
 									<MenuItem>
 										<Typography variant="body2">Hello, {user?.name}</Typography>
+									</MenuItem>
+									<MenuItem onClick={() => {
+										logout();
+										handleMenuClose();
+									}}>
+										Logout
 									</MenuItem>
 								</Menu>
 							</>
@@ -136,10 +142,11 @@ export default function AppLayout() {
 									}
 									label={mode === 'light' ? '🌙' : '☀️'}
 								/>
-								<IconButton edge="end" color="inherit">
-									<NotificationsIcon />
-								</IconButton>
+								<InvitationDropdown />
 								<Typography variant="body1">Hello, {user?.name}</Typography>
+								<Button variant="outlined" color="error" onClick={logout}>
+									Logout
+								</Button>
 							</Stack>
 						)}
 					</Stack>

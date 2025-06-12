@@ -6,7 +6,10 @@ const userRouter = Router();
 userRouter.get('/', authenticate, async (req: Request, res: Response) => {
 	const userSnap = await db.collection('users').get();
 
-	const user = userSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+	const user = userSnap.docs.map((doc) => {
+		const { password, ...rest } = doc.data();
+		return { id: doc.id, ...rest };
+	});
 
 	res.status(200).json(user);
 });
