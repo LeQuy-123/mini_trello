@@ -12,6 +12,7 @@ import cardRouter from './routes/cards';
 
 import path from 'path';
 import tasksRouter from './routes/tasks';
+import userRouter from './routes/users';
 
 const PORT = process.env.PORT || 3001;
 
@@ -64,8 +65,8 @@ app.use(
 // Your routes
 app.use('/auth', authRoute);
 app.use('/boards', boardRoutes);
-
 app.use('/invitations', invitationsRouter);
+app.use('/users', userRouter);
 
 app.use('/', (req, res) => {
 	res.send('Hello world');

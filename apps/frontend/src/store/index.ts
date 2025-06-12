@@ -4,6 +4,7 @@ import themeReducer from './themeSlice';
 import boardReducer from './boardSlice';
 import cardReducer from './cardSlice';
 import taskReducer from './taskSlice';
+import invitationReducer from './invitationSlice';
 
 export const store = configureStore({
 	reducer: {
@@ -12,6 +13,7 @@ export const store = configureStore({
 		boards: boardReducer,
 		cards: cardReducer,
 		tasks: taskReducer,
+		invitations: invitationReducer,
 	},
 });
 

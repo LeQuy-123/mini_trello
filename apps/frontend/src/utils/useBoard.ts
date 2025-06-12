@@ -7,6 +7,7 @@ import {
 	updateBoard,
 	getBoard,
 	resetStatus,
+	getUsers,
 } from '@store/boardSlice';
 
 export const useBoard = () => {
@@ -15,6 +16,8 @@ export const useBoard = () => {
 	const {
 		boards,
 		board,
+		users,
+		getUsers: getBoardUsersStatus,
 		getOne: getDetailBoardsStatus,
 		get: getBoardsStatus,
 		create: createBoardsStatus,
@@ -30,6 +33,8 @@ export const useBoard = () => {
 		createBoardsStatus,
 		updateBoardsStatus,
 		removeBoardsStatus,
+		getBoardUsersStatus,
+		users,
 		getBoards: (params: { name?: string; created?: boolean }) => dispatch(getBoards(params)),
 		getBoardDetails: (params: { id: string }) => dispatch(getBoard(params.id)),
 		createBoard: (data: { name: string; description: string }) => dispatch(createBoard(data)),
@@ -37,5 +42,6 @@ export const useBoard = () => {
 			dispatch(updateBoard({ id, data })),
 		deleteBoard: (id: string) => dispatch(deleteBoard(id)),
 		resetStatus: () => dispatch(resetStatus()),
+		getUsers: (params: { id: string }) => dispatch(getUsers(params.id)),
 	};
 };

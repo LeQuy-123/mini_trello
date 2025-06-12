@@ -14,6 +14,10 @@ class BoardService {
 		const res = await apiClient.get<Board>(`/boards/${id}`);
 		return res.data;
 	}
+	static async getUsers(id: string): Promise<Board> {
+		const res = await apiClient.get<Board>(`/boards/${id}/users`);
+		return res.data;
+	}
 
 	static async getBoards(params?: { name?: string; created?: boolean }): Promise<Board[]> {
 		const res = await apiClient.get<Board[]>('/boards', { params });

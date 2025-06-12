@@ -315,6 +315,81 @@ router.delete('/:id', authenticate, async (req: Request, res: Response) => {
 	}
 });
 
+/**
+ * @swagger
+ * /boards/{id}/users:
+ *   get:
+ *     summary: Get users (owner + members) of a board, owner listed first
+ *     tags: [Boards]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Board ID
+ *     responses:
+ *       200:
+ *         description: List of users belonging to the board
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   id:
+ *                     type: string
+ *                   name:
+ *                     type: string
+ *                   email:
+ *                     type: string
+ *       404:
+ *         description: Board not found
+ */
+router.get('/:id/users', authenticate, async (req: Request, res: Response) => {
+    const boardId = req.params.id;
+
+    try {
+        const boardDoc = await db.collection('boards').doc(boardId).get();
+        if (!boardDoc.exists) {
+			res.status(404).json({ error: 'Board not found' });
+            return
+        }
+
+        const boardData = boardDoc.data();
+        const ownerId = boardData?.userId;
+        const memberIds: string[] = boardData?.members || [];
+
+        const userIds = [ownerId, ...memberIds.filter((id) => id !== ownerId)];
+
+        if (userIds.length === 0) {
+			res.status(200).json([]);
+			return
+		}
+
+        const userSnapshots = await Promise.all(
+            userIds.map((uid) => db.collection('users').doc(uid).get())
+        );
+
+        const users = userSnapshots
+            .filter((doc) => doc.exists)
+            .map((doc) => ({
+                id: doc.id,
+                ...doc.data(),
+            }));
+
+        users.sort((a, b) => (a.id === ownerId ? -1 : b.id === ownerId ? 1 : 0));
+		res.status(200).json(users);
+        return
+    } catch (error) {
+		res.status(500).json({ error: 'Failed to fetch board users', details: error });
+        return
+    }
+});
+
 router.use('/:boardId/cards', cardRoutes);
 
 export default router;

@@ -4,9 +4,6 @@ import {
 	Drawer,
 	IconButton,
 	Divider,
-	List,
-	ListItem,
-	ListItemText,
 	styled,
 	useTheme,
 	useMediaQuery,
@@ -16,7 +13,7 @@ import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import { useState } from 'react';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
-import type { Board } from '@services/boardService';
+import UserList from './UserList';
 const drawerWidth = 240;
 
 const Main = styled('main', { shouldForwardProp: (prop) => prop !== 'open' })<{ open?: boolean }>(
@@ -48,11 +45,9 @@ const DrawerHeader = styled('div')(({ theme }) => ({
 	justifyContent: 'space-between',
 }));
 type Props = {
-	boardDetail?: Board | null,
 	children: React.ReactNode;
 }
 export default function DrawerLayout({
-	boardDetail,
 	children
 }: Props) {
 	const theme = useTheme();
@@ -111,13 +106,7 @@ export default function DrawerLayout({
 						</IconButton>
 					</DrawerHeader>
 					<Divider />
-					<List>
-						{(boardDetail?.members || []).map((userId) => (
-							<ListItem key={userId}>
-								<ListItemText primary={userId} />
-							</ListItem>
-						))}
-					</List>
+					<UserList />
 				</Drawer>
 			</>
 			<Main open={open}>

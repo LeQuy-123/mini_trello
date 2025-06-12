@@ -1,4 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import type { User } from '@services/authService';
 import BoardService, { type Board } from '@services/boardService';
 import { getDefaultAsyncState, showError, showSuccess } from '@utils/helper';
 import type { AsyncStatus } from '@utils/type';
@@ -20,20 +21,24 @@ export const getBoards = createAsyncThunk(
 		}
 	}
 );
-export const getBoard = createAsyncThunk(
-	'boards/getOne',
-	async (
-		payload: string,
-		thunkAPI
-	) => {
-		try {
-			const board: Board = await BoardService.getBoard(payload);
-			return board;
-		} catch (error: any) {
-			return thunkAPI.rejectWithValue(error?.message || 'Failed to fetch board detail');
-		}
+
+export const getUsers = createAsyncThunk('boards/getUsers', async (payload: string, thunkAPI) => {
+	try {
+		const board: Board = await BoardService.getUsers(payload);
+		return board;
+	} catch (error: any) {
+		return thunkAPI.rejectWithValue(error?.message || 'Failed to fetch board detail');
 	}
-);
+});
+
+export const getBoard = createAsyncThunk('boards/getOne', async (payload: string, thunkAPI) => {
+	try {
+		const board: Board = await BoardService.getBoard(payload);
+		return board;
+	} catch (error: any) {
+		return thunkAPI.rejectWithValue(error?.message || 'Failed to fetch board detail');
+	}
+});
 export const createBoard = createAsyncThunk(
 	'boards/create',
 	async (data: { name: string; description: string }, thunkAPI) => {
@@ -73,8 +78,10 @@ export const deleteBoard = createAsyncThunk('boards/delete', async (id: string, 
 
 interface BoardState {
 	boards: Board[];
+	users: User[];
 	board: Board | null;
 	get: AsyncStatus;
+	getUsers: AsyncStatus;
 	getOne: AsyncStatus;
 	create: AsyncStatus;
 	update: AsyncStatus;
@@ -84,7 +91,9 @@ interface BoardState {
 const initialState: BoardState = {
 	boards: [],
 	board: null,
+	users: [],
 	get: getDefaultAsyncState(),
+	getUsers: getDefaultAsyncState(),
 	getOne: getDefaultAsyncState(),
 	create: getDefaultAsyncState(),
 	update: getDefaultAsyncState(),
@@ -105,7 +114,7 @@ const boardSlice = createSlice({
 		},
 	},
 	extraReducers: (builder) => {
-		const handleAsync = <K extends keyof Omit<BoardState, 'boards' | 'board'>>(type: K, thunk: any) => {
+		const handleAsync = <K extends keyof Omit<BoardState, 'boards' | 'board' | 'users'>>(type: K, thunk: any) => {
 			builder
 				.addCase(thunk.pending, (state) => {
 					state[type].loading = true;
@@ -115,6 +124,9 @@ const boardSlice = createSlice({
 					state[type].loading = false;
 					if (type === 'get') {
 						state.boards = action.payload;
+					}
+					if (type === 'getUsers') {
+						state.users = action.payload;
 					}
 					if (type === 'getOne') {
 						state.board = action.payload;
@@ -143,6 +155,8 @@ const boardSlice = createSlice({
 		handleAsync('create', createBoard);
 		handleAsync('update', updateBoard);
 		handleAsync('remove', deleteBoard);
+		handleAsync('getUsers', getUsers);
+
 	},
 });
 

@@ -145,7 +145,7 @@ export const moveTasks = createAsyncThunk(
 		thunkAPI
 	) => {
 		try {
-			TaskService.moveTask(boardId, cardId, data);
+			await TaskService.moveTask(boardId, cardId, data);
 			const tasksOriginal = await TaskService.getTasks({ boardId, cardId });
 			const tasksNews = await TaskService.getTasks({ boardId, cardId: data.targetGroup });
 
