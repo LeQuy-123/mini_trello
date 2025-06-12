@@ -94,10 +94,7 @@ router.get('/', authenticate, checkBoardAccess, async (req: Request, res: Respon
  */
 router.post('/', authenticate, checkBoardAccess, async (req: Request, res: Response) => {
 	const { id: cardId, boardId } = req.params;
-	console.log("🚀 ~ router.post ~ cardId:", cardId)
-	console.log("🚀 ~ router.post ~ boardId:", boardId)
 	const { title, description, status } = req.body;
-	console.log("🚀 ~ router.post ~ req.body:", req.body)
 
 	if (!title || !description || !status) {
 		res.status(400).json({ error: 'Missing fields' });

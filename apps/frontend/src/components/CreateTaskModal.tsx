@@ -20,7 +20,7 @@ type CreateTaskModalProps = {
 	onClose: () => void;
 	board: Board;
 	card: Card;
-	task?: Task
+	task?: Task;
 };
 
 const schema = yup.object({
@@ -29,7 +29,7 @@ const schema = yup.object({
 	status: yup.string().required('Status is required'),
 });
 
-export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ open, onClose, board, card, task }) => {
+export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ open, onClose, board, card, task  }) => {
 	const {
 		createTask,
 		updateTask,

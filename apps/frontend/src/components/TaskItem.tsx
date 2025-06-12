@@ -10,6 +10,8 @@ import {
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import type { Task } from '@services/taskService';
 import { statusColors } from '@utils/helper';
+import { useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 interface TaskItemProps {
 	task: Task;
@@ -28,7 +30,14 @@ const TaskItem: React.FC<TaskItemProps> = ({ task, onEdit, onDelete }) => {
 	};
 
 	const handleClose = () => setAnchorEl(null);
-
+	const {
+		attributes,
+		listeners,
+		setNodeRef,
+		transform,
+		transition,
+		isDragging
+	} = useSortable({ id: `task-${task.id}`, data: { type: 'task', cardId: task.cardId, taskId: task.id } });
 	return (
 		<Box
 			sx={{
@@ -40,8 +49,8 @@ const TaskItem: React.FC<TaskItemProps> = ({ task, onEdit, onDelete }) => {
 						: theme.palette.background.default,
 				borderRadius: 2,
 				border: `1px solid ${theme.palette.mode === 'dark'
-						? theme.palette.grey[800]
-						: theme.palette.grey[300]
+					? theme.palette.grey[800]
+					: theme.palette.grey[300]
 					}`,
 				boxShadow: 1,
 				cursor: 'pointer',
@@ -50,12 +59,22 @@ const TaskItem: React.FC<TaskItemProps> = ({ task, onEdit, onDelete }) => {
 					right: 8,
 					opacity: 1,
 				},
+				opacity: isDragging ? 0.2 : 1,
 				borderLeft: `6px solid ${statusColors[task.status]}`,
-
+				transform: CSS.Transform.toString(transform),
+				transition,
 			}}
+			ref={setNodeRef}
 			onClick={() => console.log('Task clicked')}
+
 		>
-			<Box sx={{ pr: 5 }}>
+			<Box sx={{
+				pr: 5,
+				userSelect: 'none',
+			}}
+				{...attributes}
+				{...listeners}
+			>
 				<Typography variant="subtitle2" fontWeight={500}>
 					{task.title}
 				</Typography>
