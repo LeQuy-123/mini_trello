@@ -559,8 +559,7 @@ router.patch('/reorder', authenticate, checkBoardAccess, async (req: Request, re
 router.patch('/move', authenticate, checkBoardAccess, async (req: Request, res: Response) => {
 	const { id: sourceCardId } = req.params;
 	const { sourceId, targetId, targetGroup } = req.body;
-	console.log("🚀 ~ router.patch ~ sourceId:", sourceId)
-	console.log("🚀 ~ router.patch ~ targetId:", targetId)
+
 
 	if (!sourceId || !targetId || !targetGroup) {
 		res.status(400).json({ error: 'Missing required fields' });
@@ -586,24 +585,13 @@ router.patch('/move', authenticate, checkBoardAccess, async (req: Request, res: 
 		}));
 		console.log('🚀 ~ router.patch ~ sourceSnapshot:', sourceTasks);
 
-		const targetTasks = targetSnapshot.docs.map((doc) => ({
-			id: doc.id,
-			...doc.data(),
-		}));
 
 		const sourceIndex = sourceTasks.findIndex((task) => task.id === sourceId);
-		// console.log('🚀 ~ router.patch ~ sourceIndex:',sourceTasks, sourceId);
-		const targetIndex = targetTasks.findIndex((task) => task.id === targetId);
-		// console.log('🚀 ~ router.patch ~ targetIndex:',targetTasks, targetId);
-
-		if (sourceIndex === -1 || (targetIndex === -1 && targetId != -1)) {
-			res.status(400).json({ error: 'Task not found in one of the cards' });
+		if (sourceIndex === -1) {
+			res.status(400).json({ error: 'Source task not found in source card' });
 			return
 		}
-
 		const [movedTask] = sourceTasks.splice(sourceIndex, 1);
-
-		targetTasks.splice(targetIndex, 0, movedTask);
 
 		const batch = db.batch();
 
@@ -612,14 +600,39 @@ router.patch('/move', authenticate, checkBoardAccess, async (req: Request, res: 
 			batch.update(ref, { cardIndex: i });
 		});
 
-		targetTasks.forEach((task, i) => {
-			const ref = db.collection('tasks').doc(task.id);
-			const update: any = { cardIndex: i };
-			if (task.id === movedTask.id) {
-				update.cardId = targetGroup;
+		if (targetId === '-1') {
+			const movedRef = db.collection('tasks').doc(movedTask.id);
+			batch.update(movedRef, { cardId: targetGroup, cardIndex: 0 });
+		} else {
+			const targetSnapshot = await db
+				.collection('tasks')
+				.where('cardId', '==', targetGroup)
+				.orderBy('cardIndex')
+				.get();
+
+			const targetTasks = targetSnapshot.docs.map((doc) => ({
+				id: doc.id,
+				...doc.data(),
+			}));
+
+			const targetIndex = targetTasks.findIndex((task) => task.id === targetId);
+
+			if (targetIndex === -1) {
+				res.status(400).json({ error: 'Target task not found in target card' });
+				return;
 			}
-			batch.update(ref, update);
-		});
+
+			targetTasks.splice(targetIndex, 0, movedTask);
+
+			targetTasks.forEach((task, i) => {
+				const ref = db.collection('tasks').doc(task.id);
+				const update: any = { cardIndex: i };
+				if (task.id === movedTask.id) {
+					update.cardId = targetGroup;
+				}
+				batch.update(ref, update);
+			});
+		}
 
 		await batch.commit();
 
