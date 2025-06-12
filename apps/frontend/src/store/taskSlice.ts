@@ -173,38 +173,7 @@ const taskSlice = createSlice({
 			state.reorder = getDefaultAsyncState();
 
 		},
-		// reorderTasks: (
-		// 	state,
-		// 	action: PayloadAction<{
-		// 		sourceCardId: string;
-		// 		destinationCardId: string;
-		// 		taskId: string;
-		// 		newIndex: number;
-		// 	}>
-		// ) => {
-		// 	const { sourceCardId, destinationCardId, taskId, newIndex } = action.payload;
-		// 	const sourceTasks = state.tasksByCardId[sourceCardId] || [];
-		// 	const destinationTasks = state.tasksByCardId[destinationCardId] || [];
-		// 	const taskIndex = sourceTasks.findIndex((t) => t.id === taskId);
-		// 	if (taskIndex === -1) return;
-		// 	const movedTask = sourceTasks[taskIndex];
 
-		// 	const newSourceTasks =
-		// 		sourceCardId === destinationCardId
-		// 			? [...sourceTasks]
-		// 			: sourceTasks.filter((_, i) => i !== taskIndex);
-
-		// 	const newDestinationTasks =
-		// 		sourceCardId === destinationCardId ? newSourceTasks : [...destinationTasks];
-
-		// 	if (sourceCardId === destinationCardId) {
-		// 		newDestinationTasks.splice(taskIndex, 1);
-		// 	}
-
-		// 	newDestinationTasks.splice(newIndex, 0, movedTask);
-		// 	state.tasksByCardId[sourceCardId] = newSourceTasks;
-		// 	state.tasksByCardId[destinationCardId] = newDestinationTasks;
-		// },
 	},
 	extraReducers: (builder) => {
 		const handleAsync = <K extends keyof Omit<TaskState, 'tasksByCardId' | 'task'>>(

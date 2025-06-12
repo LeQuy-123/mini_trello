@@ -146,7 +146,6 @@ export default function CardList({
 					targetGroup
 				}
 			})
-			console.log("🚀 ~ handleDragEnd ~ target:", targetGroup)
 
 		}
 	}
