@@ -28,7 +28,7 @@ export default function CardList({
 		deleteCard,
 		reorderCard
 	} = useCard()
-	const {  getTasks } = useTask()
+	const {  getTasks, reorderTasks, tasksByCardId } = useTask()
 	useEffect(() => {
 		fetchData()
 	}, [])
@@ -74,7 +74,6 @@ export default function CardList({
 
 
 	const handleDragEnd = (event: any) => {
-
 		const { source, target } = event.operation;
 		if(!target) return;
 		if (event.canceled) {
@@ -83,11 +82,27 @@ export default function CardList({
 		if (source.type === 'card') { //move card
 			const sourceIndex = source.sortable.initialIndex;
 			const targetIndex = source.sortable.index
+			if(sourceIndex === targetIndex) return;
 			reorderCard({
 				boardId: board.id,
 				data: {
 					sourceId: String(cards[sourceIndex].id),
 					targetId: String(cards[targetIndex].id)
+				}
+			})
+		}
+
+		if (source.type === 'item') { //move card
+			const sourceIndex = source.sortable.initialIndex;
+			const targetIndex = source.sortable.index;
+			if (sourceIndex === targetIndex) return;
+			const tasks = tasksByCardId?.[source.sortable.group]
+			reorderTasks({
+				boardId: board.id,
+				cardId: source.sortable.group,
+				data: {
+					sourceId: String(tasks[sourceIndex].id),
+					targetId: String(tasks[targetIndex].id)
 				}
 			})
 

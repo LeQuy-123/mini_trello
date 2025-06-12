@@ -9,7 +9,7 @@ import {
 	deleteTask,
 	reorderTasks,
 } from '@store/taskSlice';
-import type { CreateTaskBody } from '@services/taskService';
+import type { CreateTaskBody, TaskReorderBody } from '@services/taskService';
 
 export const useTask = () => {
 	const dispatch = useDispatch<AppDispatch>();
@@ -45,23 +45,13 @@ export const useTask = () => {
 			dispatch(deleteTask(params)),
 		resetTaskStatus: () => dispatch(resetTaskStatus()),
 		reorderTasks: ({
-			sourceCardId,
-			overCardId,
-			activeId,
-			newIndex
+			boardId,
+			cardId,
+			data,
 		}: {
-			sourceCardId: string;
-			overCardId: string;
-			activeId: string;
-			newIndex: number;
-		}) =>
-			dispatch(
-				reorderTasks({
-					sourceCardId,
-					destinationCardId: overCardId,
-					taskId: activeId,
-					newIndex,
-				})
-			),
+			boardId: string;
+			cardId: string;
+			data: TaskReorderBody;
+		}) => dispatch(reorderTasks({ boardId, cardId, data })),
 	};
 };

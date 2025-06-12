@@ -39,7 +39,11 @@ const router = Router({ mergeParams: true });
 router.get('/', authenticate, checkBoardAccess, async (req: Request, res: Response) => {
 	const { id: cardId } = req.params;
 
-	const snapshot = await db.collection('tasks').where('cardId', '==', cardId).get();
+	const snapshot = await db
+		.collection('tasks')
+		.where('cardId', '==', cardId)
+		.orderBy('cardIndex')
+		.get();
 
 	const tasks = snapshot.docs.map((doc) => {
 		const data = doc.data();
@@ -49,6 +53,7 @@ router.get('/', authenticate, checkBoardAccess, async (req: Request, res: Respon
 			title: data.title,
 			description: data.description,
 			status: data.status,
+			cardIndex: data.cardIndex,
 		};
 	});
 
@@ -100,6 +105,12 @@ router.post('/', authenticate, checkBoardAccess, async (req: Request, res: Respo
 		res.status(400).json({ error: 'Missing fields' });
 		return;
 	}
+	const existingTasks = await db
+		.collection('tasks')
+		.where('cardId', '==', cardId)
+		.get();
+
+	const nextIndex = existingTasks.empty ? 0 : (existingTasks.docs[0].data().cardIndex ?? 0) + 1;
 
 	try {
 		const docRef = await db.collection('tasks').add({
@@ -111,6 +122,7 @@ router.post('/', authenticate, checkBoardAccess, async (req: Request, res: Respo
 			ownerId: req.uid,
 			assignedUserIds: [],
 			createdAt: admin.firestore.Timestamp.now(),
+			cardIndex: nextIndex,
 		});
 		await db
 			.collection('cards')
@@ -383,5 +395,118 @@ router.delete(
 		res.status(204).send();
 	}
 );
+
+/**
+ * @swagger
+ * /boards/{boardId}/cards/{id}/tasks/reorder:
+ *   put:
+ *     summary: Reorder tasks within a card
+ *     description: Reorders tasks based on drag-and-drop by updating their cardIndex within the same card.
+ *     tags: [Tasks]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: boardId
+ *         required: true
+ *         schema:
+ *           type: string
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: Card ID
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - sourceId
+ *               - targetId
+ *             properties:
+ *               sourceId:
+ *                 type: string
+ *                 description: ID of the task being moved
+ *               targetId:
+ *                 type: string
+ *                 description: ID of the task to move next to
+ *     responses:
+ *       200:
+ *         description: Tasks reordered successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Tasks reordered
+ *       400:
+ *         description: One or both task IDs not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *       500:
+ *         description: Server error during reorder
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                 details:
+ *                   type: string
+ */
+
+router.patch('/reorder', authenticate, checkBoardAccess, async (req: Request, res: Response) => {
+	const { id: cardId } = req.params;
+	const { sourceId, targetId } = req.body;
+
+
+	try {
+		const snapshot = await db
+			.collection('tasks')
+			.where('cardId', '==', cardId)
+			.orderBy('cardIndex')
+			.get();
+
+		const tasks = snapshot.docs.map((doc) => ({
+			id: doc.id,
+			...doc.data(),
+		}));
+
+		const sourceIndex = tasks.findIndex((t) => t.id === sourceId);
+		const targetIndex = tasks.findIndex((t) => t.id === targetId);
+
+		if (sourceIndex === -1 || targetIndex === -1) {
+			res.status(400).json({ error: 'Task not found in this card' });
+			return;
+		}
+
+		const [moved] = tasks.splice(sourceIndex, 1);
+		tasks.splice(targetIndex, 0, moved);
+
+		const batch = db.batch();
+		tasks.forEach((task, i) => {
+			const ref = db.collection('tasks').doc(task.id);
+			batch.update(ref, { cardIndex: i });
+		});
+		await batch.commit();
+
+		res.status(200).json(tasks);
+	} catch (error) {
+		console.error(error);
+		res.status(500).json({ error: 'Failed to reorder tasks', details: error });
+	}
+});
+
 
 export default router;

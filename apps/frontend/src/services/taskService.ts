@@ -1,6 +1,9 @@
 import apiClient from './apiClient';
 
-
+export type TaskReorderBody = {
+	sourceId: string;
+	targetId: string;
+};
 export interface Task {
 	id: string;
 	cardId: string;
@@ -83,9 +86,12 @@ class TaskService {
 		cardId: string;
 		taskId: string;
 	}): Promise<boolean> {
-		await apiClient.delete(
-			`/boards/${boardId}/cards/${cardId}/tasks/${taskId}`);
+		await apiClient.delete(`/boards/${boardId}/cards/${cardId}/tasks/${taskId}`);
 		return true;
+	}
+	static async reorderCard(boardId: string, cardId: string , data: TaskReorderBody): Promise<void> {
+		const res = await apiClient.patch(`/boards/${boardId}/cards/${cardId}/tasks/reorder`, data);
+		return res.data;
 	}
 }
 

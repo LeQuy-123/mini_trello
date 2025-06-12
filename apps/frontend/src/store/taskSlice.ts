@@ -1,5 +1,5 @@
-import { createSlice, createAsyncThunk, type PayloadAction } from '@reduxjs/toolkit';
-import TaskService, { type Task, type CreateTaskBody } from '@services/taskService';
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import TaskService, { type Task, type CreateTaskBody, type TaskReorderBody } from '@services/taskService';
 import { getDefaultAsyncState, showError, showSuccess } from '@utils/helper';
 import type { AsyncStatus } from '@utils/type';
 import { decrementTaskCount, incrementTaskCount } from './cardSlice';
@@ -12,6 +12,7 @@ interface TaskState {
 	create: AsyncStatus;
 	update: AsyncStatus;
 	getOne: AsyncStatus;
+	reorder: ReturnType<typeof getDefaultAsyncState>;
 }
 
 
@@ -23,6 +24,7 @@ const initialState: TaskState = {
 	create: getDefaultAsyncState(),
 	update: getDefaultAsyncState(),
 	getOne: getDefaultAsyncState(),
+	reorder: getDefaultAsyncState(),
 };
 
 
@@ -120,7 +122,20 @@ export const updateTask = createAsyncThunk(
 	}
 );
 
-
+export const reorderTasks = createAsyncThunk(
+	'task/reorder',
+	async (
+		{ boardId, data, cardId }: { boardId: string; data: TaskReorderBody; cardId: string },
+		thunkAPI
+	) => {
+		try {
+			const tasks = await TaskService.reorderCard(boardId,cardId, data);
+			return { cardId, tasks };
+		} catch (error: any) {
+			return thunkAPI.rejectWithValue(error?.message || 'Failed to delete card');
+		}
+	}
+);
 const taskSlice = createSlice({
 	name: 'tasks',
 	initialState,
@@ -131,38 +146,38 @@ const taskSlice = createSlice({
 			state.update = getDefaultAsyncState();
 			state.getOne = getDefaultAsyncState();
 		},
-		reorderTasks: (
-			state,
-			action: PayloadAction<{
-				sourceCardId: string;
-				destinationCardId: string;
-				taskId: string;
-				newIndex: number;
-			}>
-		) => {
-			const { sourceCardId, destinationCardId, taskId, newIndex } = action.payload;
-			const sourceTasks = state.tasksByCardId[sourceCardId] || [];
-			const destinationTasks = state.tasksByCardId[destinationCardId] || [];
-			const taskIndex = sourceTasks.findIndex((t) => t.id === taskId);
-			if (taskIndex === -1) return;
-			const movedTask = sourceTasks[taskIndex];
+		// reorderTasks: (
+		// 	state,
+		// 	action: PayloadAction<{
+		// 		sourceCardId: string;
+		// 		destinationCardId: string;
+		// 		taskId: string;
+		// 		newIndex: number;
+		// 	}>
+		// ) => {
+		// 	const { sourceCardId, destinationCardId, taskId, newIndex } = action.payload;
+		// 	const sourceTasks = state.tasksByCardId[sourceCardId] || [];
+		// 	const destinationTasks = state.tasksByCardId[destinationCardId] || [];
+		// 	const taskIndex = sourceTasks.findIndex((t) => t.id === taskId);
+		// 	if (taskIndex === -1) return;
+		// 	const movedTask = sourceTasks[taskIndex];
 
-			const newSourceTasks =
-				sourceCardId === destinationCardId
-					? [...sourceTasks]
-					: sourceTasks.filter((_, i) => i !== taskIndex);
+		// 	const newSourceTasks =
+		// 		sourceCardId === destinationCardId
+		// 			? [...sourceTasks]
+		// 			: sourceTasks.filter((_, i) => i !== taskIndex);
 
-			const newDestinationTasks =
-				sourceCardId === destinationCardId ? newSourceTasks : [...destinationTasks];
+		// 	const newDestinationTasks =
+		// 		sourceCardId === destinationCardId ? newSourceTasks : [...destinationTasks];
 
-			if (sourceCardId === destinationCardId) {
-				newDestinationTasks.splice(taskIndex, 1);
-			}
+		// 	if (sourceCardId === destinationCardId) {
+		// 		newDestinationTasks.splice(taskIndex, 1);
+		// 	}
 
-			newDestinationTasks.splice(newIndex, 0, movedTask);
-			state.tasksByCardId[sourceCardId] = newSourceTasks;
-			state.tasksByCardId[destinationCardId] = newDestinationTasks;
-		},
+		// 	newDestinationTasks.splice(newIndex, 0, movedTask);
+		// 	state.tasksByCardId[sourceCardId] = newSourceTasks;
+		// 	state.tasksByCardId[destinationCardId] = newDestinationTasks;
+		// },
 	},
 	extraReducers: (builder) => {
 		const handleAsync = <K extends keyof Omit<TaskState, 'tasksByCardId' | 'task'>>(
@@ -183,6 +198,10 @@ const taskSlice = createSlice({
 					}
 					if (type === 'getOne') {
 						state.task = action.payload;
+					}
+					if (type === 'reorder') {
+						const { cardId, tasks } = action.payload;
+						state.tasksByCardId[cardId] = tasks;
 					}
 
 					if (type === 'create') {
@@ -220,8 +239,9 @@ const taskSlice = createSlice({
 
 		handleAsync('create', createTask);
 		handleAsync('update', updateTask);
+		handleAsync('reorder', reorderTasks);
 	},
 });
 
-export const { resetTaskStatus, reorderTasks } = taskSlice.actions;
+export const { resetTaskStatus } = taskSlice.actions;
 export default taskSlice.reducer;
