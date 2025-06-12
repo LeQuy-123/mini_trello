@@ -573,17 +573,11 @@ router.patch('/move', authenticate, checkBoardAccess, async (req: Request, res: 
 			.orderBy('cardIndex')
 			.get();
 
-		const targetSnapshot = await db
-			.collection('tasks')
-			.where('cardId', '==', targetGroup)
-			.orderBy('cardIndex')
-			.get();
 
 		const sourceTasks = sourceSnapshot.docs.map((doc) => ({
 			id: doc.id,
 			...doc.data(),
 		}));
-		console.log('🚀 ~ router.patch ~ sourceSnapshot:', sourceTasks);
 
 
 		const sourceIndex = sourceTasks.findIndex((task) => task.id === sourceId);
