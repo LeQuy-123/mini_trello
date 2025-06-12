@@ -7,7 +7,7 @@ export interface Task {
 	boardId: string;
 	title: string;
 	description: string;
-	status: 'new' | 'wip' | 'reject' | 'complete';
+	status: 'new' | 'wip' | 'reject' | 'complete' | '';
 	ownerId: string;
 	assignedUserIds: string[];
 }

@@ -4,6 +4,7 @@ import { authenticate } from '../middleware/authMiddleware';
 import { checkBoardAccess } from '../middleware/checkBoardAccess';
 import { db } from '../firebase';
 import taskRoute from './tasks';
+import { Card } from '../types/Card';
 
 const router = Router({ mergeParams: true });
 /**
@@ -52,7 +53,11 @@ router.get('/', authenticate, checkBoardAccess, async (req: Request, res: Respon
 	const { boardId } = req.params;
 
 	try {
-		const snapshot = await db.collection('cards').where('boardId', '==', boardId).get();
+		const snapshot = await db
+			.collection('cards')
+			.where('boardId', '==', boardId)
+			.orderBy('boardIndex')
+			.get();
 
 		const cards = snapshot.docs.map((doc) => {
 			const data = doc.data();
@@ -60,6 +65,7 @@ router.get('/', authenticate, checkBoardAccess, async (req: Request, res: Respon
 				id: doc.id,
 				name: data.name,
 				description: data.description,
+				boardIndex: data.boardIndex,
 				...data,
 			};
 		});
@@ -133,7 +139,7 @@ router.post('/', authenticate, checkBoardAccess, async (req: Request, res: Respo
 			userId: req.uid,
 			createdAt: Timestamp.now(),
 			tasksCount: 0,
-			index: currentIndex,
+			boardIndex: currentIndex,
 		});
 
 		await boardRef.update({
@@ -144,7 +150,7 @@ router.post('/', authenticate, checkBoardAccess, async (req: Request, res: Respo
 			id: docRef.id,
 			name,
 			description,
-			index: currentIndex,
+			boardIndex: currentIndex,
 		});
 	} catch (error) {
 		res.status(500).json({ error: 'Failed to create card', details: error });
@@ -398,12 +404,11 @@ router.delete('/:id', authenticate, checkBoardAccess, async (req: Request, res: 
 		res.status(500).json({ error: 'Failed to delete card', details: error });
 	}
 });
-
 /**
  * @swagger
  * /boards/{boardId}/cards/reorder:
  *   patch:
- *     summary: Reorder cards in a board (drag and drop)
+ *     summary: Reorder cards using source and target IDs
  *     tags: [Cards]
  *     parameters:
  *       - in: path
@@ -419,29 +424,15 @@ router.delete('/:id', authenticate, checkBoardAccess, async (req: Request, res: 
  *           schema:
  *             type: object
  *             required:
- *               - source
- *               - destination
- *               - draggableId
+ *               - sourceId
+ *               - targetId
  *             properties:
- *               source:
- *                 type: object
- *                 required:
- *                   - index
- *                 properties:
- *                   index:
- *                     type: integer
- *                     example: 0
- *               destination:
- *                 type: object
- *                 required:
- *                   - index
- *                 properties:
- *                   index:
- *                     type: integer
- *                     example: 2
- *               draggableId:
+ *               sourceId:
  *                 type: string
  *                 example: "card_abc123"
+ *               targetId:
+ *                 type: string
+ *                 example: "card_xyz456"
  *     security:
  *       - bearerAuth: []
  *     responses:
@@ -454,7 +445,15 @@ router.delete('/:id', authenticate, checkBoardAccess, async (req: Request, res: 
  *               properties:
  *                 message:
  *                   type: string
- *                   example: "Card reordered successfully"
+ *                 cards:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: string
+ *                       index:
+ *                         type: integer
  *       400:
  *         description: Invalid input or card not found
  *       500:
@@ -462,44 +461,52 @@ router.delete('/:id', authenticate, checkBoardAccess, async (req: Request, res: 
  */
 
 router.patch(
-	'/:boardId/cards/reorder',
+	'/reorder',
 	authenticate,
 	checkBoardAccess,
 	async (req: Request, res: Response) => {
 		const { boardId } = req.params;
-		const { source, destination, draggableId } = req.body;
+		const { sourceId, targetId } = req.body;
 
-		if (!destination) {
-			res.status(200).json({ message: 'No reordering needed' });
-			return
+
+		if (!sourceId || !targetId) {
+			res.status(400).json({ error: 'Missing sourceId or targetId' });
+			return;
 		}
 
 		try {
 			const snapshot = await db
 				.collection('cards')
 				.where('boardId', '==', boardId)
-				.orderBy('index')
+				.orderBy('boardIndex')
 				.get();
 
 			const cards = snapshot.docs.map((doc) => ({
 				id: doc.id,
 				...doc.data(),
-			}));
+			})) as Card[];
 
-			const movingCardIndex = cards.findIndex((card) => card.id === draggableId);
-			const [movedCard] = cards.splice(movingCardIndex, 1);
+			const sourceIndex = cards.findIndex((card) => card.id === sourceId);
+			const targetIndex = cards.findIndex((card) => card.id === targetId);
 
-			cards.splice(destination.index, 0, movedCard);
+			if (sourceIndex === -1 || targetIndex === -1) {
+				res.status(400).json({ error: 'Card not found' });
+				return;
+			}
+
+			const [movedCard] = cards.splice(sourceIndex, 1);
+			cards.splice(targetIndex, 0, movedCard);
 
 			const batch = db.batch();
 			cards.forEach((card, i) => {
 				const ref = db.collection('cards').doc(card.id);
-				batch.update(ref, { index: i });
+				batch.update(ref, { boardIndex: i });
 			});
 
 			await batch.commit();
 
-			res.status(200).json({ message: 'Card reordered successfully' });
+
+			res.status(200).json(cards);
 		} catch (error) {
 			console.error(error);
 			res.status(500).json({ error: 'Failed to reorder cards', details: error });

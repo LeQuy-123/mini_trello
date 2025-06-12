@@ -12,24 +12,9 @@ import { useEffect, useState } from 'react';
 import type { Card as CardType } from '@services/cardService';
 import { useCard } from '@utils/useCard';
 import CardComponent from './CardComponent';
-import {
-	DndContext,
-	useSensors,
-	useSensor,
-	PointerSensor,
-	TouchSensor,
-	MouseSensor,
-	closestCenter,
-	type CollisionDetection,
-	DragOverlay,
-} from '@dnd-kit/core';
-import {
-	SortableContext,
-	horizontalListSortingStrategy,
-} from '@dnd-kit/sortable';
-import type { Task } from '@services/taskService';
+
 import { useTask } from '@utils/useTask';
-import TaskItem from './TaskItem';
+import { DragDropProvider } from '@dnd-kit/react';
 type Props = {
 	board: Board
 }
@@ -40,17 +25,27 @@ export default function CardList({
 		cards,
 		getCards,
 		getCardsStatus,
-		deleteCard
+		deleteCard,
+		reorderCard
 	} = useCard()
-	const { tasksByCardId } = useTask()
+	const {  getTasks } = useTask()
 	useEffect(() => {
-		getCards({
-			boardId: board.id
-		})
+		fetchData()
 	}, [])
+	const fetchData = async () => {
+		try {
+			const cards = await getCards({ boardId: board.id }).unwrap();
+			await Promise.all(
+				cards.map((card) =>
+					getTasks({ boardId: board.id, cardId: card.id })
+				)
+			);
+		} catch (error) {
+			console.log("🚀 ~ fetchData ~ error:", error)
+		}
+	}
 	const [selectedCard, setSelectedCard] = useState<null | CardType>(null);
-	const [draggingCard, setDraggingCard] = useState<CardType | null>(null);
-	const [draggingTask, setDraggingTask] = useState<Task | null>(null);
+
 
 	const [open, setOpen] = useState(false);
 	const handleClose = () => setOpen(false);
@@ -76,112 +71,85 @@ export default function CardList({
 		));
 	};
 
-	const sensors = useSensors(
-		useSensor(PointerSensor),
-		useSensor(TouchSensor),
-		useSensor(MouseSensor)
-	);
+
 
 	const handleDragEnd = (event: any) => {
-		const { active, over } = event;
-		console.log("🚀 ~ handleDragEnd ~ active:", active)
-		console.log("🚀 ~ handleDragEnd ~ over:", over)
-		setDraggingCard(null)
+
+		const { source, target } = event.operation;
+		if(!target) return;
+		if (event.canceled) {
+			return;
+		}
+		if (source.type === 'card') { //move card
+			const sourceIndex = source.sortable.initialIndex;
+			const targetIndex = source.sortable.index
+			reorderCard({
+				boardId: board.id,
+				data: {
+					sourceId: String(cards[sourceIndex].id),
+					targetId: String(cards[targetIndex].id)
+				}
+			})
+
+		}
 	}
+
+
+
+
 
 	return (
 		<>
-			<DndContext
-				sensors={sensors}
-				onDragStart={({ active }) => {
-					if (active.id?.toString()?.includes('task')) {
-						const taskId = active.id.toString().replace('task-', '');
-						const allTasks = Object.values(tasksByCardId).flat();
-						const found = allTasks.find(t => t.id === taskId);
-						setDraggingTask(found || null);
-					} else {
-						const cardId = active.id.toString().replace('card-', '');
-						const found = cards.find((c) => c.id === cardId);
-						if (found) {
-							setDraggingCard(found);
-						}
-					}
-
-				}}
-				collisionDetection={customCollisionDetection}
+			<DragDropProvider
 				onDragEnd={handleDragEnd}
-
 			>
 				<Stack direction='row' gap={2} sx={{ mt: 2 }} alignItems={'flex-start'}>
-					<SortableContext
-						items={cards.map(card => `card-${card.id}`)}
-						id="cards"
-						strategy={horizontalListSortingStrategy}
+					{getCardsStatus.loading
+						? renderCardSkeletons()
+						: cards?.map((card, index) => (
+							<CardComponent
+								key={`card-${card.id}`}
+								card={card}
+								cardIndex={index}
+								board={board}
+								onClickEdit={() => handleEdit(card)}
+								onClickDelete={() => handleDelete(card)}
+							/>
+						))}
+					<Card
+						sx={{
+							width: 300,
+							minHeight: 60,
+							position: 'relative',
+							transition: 'box-shadow 0.2s',
+							'&:hover': {
+								boxShadow: (theme) => theme.shadows['4'],
+							},
+						}}
 					>
-
-						{getCardsStatus.loading
-							? renderCardSkeletons()
-							: cards?.map((card) => (
-								<CardComponent
-									key={`card-${card.id}`}
-									card={card}
-									board={board}
-									onClickEdit={() => handleEdit(card)}
-									onClickDelete={() => handleDelete(card)}
-								/>
-							))}
-						<Card
+						<CardActionArea
 							sx={{
-								width: 300,
-								minHeight: 60,
-								position: 'relative',
-								transition: 'box-shadow 0.2s',
-								'&:hover': {
-									boxShadow: (theme) => theme.shadows['4'],
-								},
+								height: '100%',
+								display: 'flex',
+								alignItems: 'stretch',
+								justifyContent: 'start',
 							}}
+							onClick={handleOpen}
 						>
-							<CardActionArea
-								sx={{
-									height: '100%',
-									display: 'flex',
-									alignItems: 'stretch',
-									justifyContent: 'start',
-								}}
-								onClick={handleOpen}
-							>
-								<CardContent>
-									<Typography
-										variant="subtitle1"
-										color="text.secondary"
-										textAlign="center"
-									>
-										+ Add Card
-									</Typography>
-								</CardContent>
-							</CardActionArea>
-						</Card>
-					</SortableContext>
+							<CardContent>
+								<Typography
+									variant="subtitle1"
+									color="text.secondary"
+									textAlign="center"
+								>
+									+ Add Card
+								</Typography>
+							</CardContent>
+						</CardActionArea>
+					</Card>
 				</Stack>
 
-				<DragOverlay>
-					{draggingCard ? (
-						<CardComponent
-							card={draggingCard}
-							board={board}
-							draggingTaskId={null}
-							onClickEdit={() => { }}
-							onClickDelete={() => { }}
-						/>
-					) : draggingTask ? (
-						<TaskItem
-							task={draggingTask}
-							onEdit={() => { }}
-							onDelete={() => { }}
-						/>
-					) : null}
-				</DragOverlay>
-			</DndContext>
+			</DragDropProvider>
 
 			{board && <CreateCardModal
 				open={open}
@@ -193,23 +161,3 @@ export default function CardList({
 		</>
 	);
 }
-
-
-
-
-const customCollisionDetection: CollisionDetection = (args) => {
-	const { active, droppableContainers } = args;
-	const activeType = active.data.current?.type;
-
-	const filtered = droppableContainers.filter((entry) => {
-		const entryType = entry?.data?.current?.type;
-		if (activeType === 'task' && entryType === 'card') return true;
-		if (activeType === entryType) return true;
-		return false;
-	});
-
-	return closestCenter({
-		...args,
-		droppableContainers: filtered,
-	});
-};

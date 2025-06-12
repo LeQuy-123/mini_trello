@@ -15,10 +15,11 @@ export const showSuccess = (message: string) => toast.success(message);
 export const showError = (message: string) => toast.error(message);
 
 export const statusColors: Record<Task['status'], string> = {
-	new: '#1976d2', // blue
-	wip: '#f9a825', // amber
-	reject: '#d32f2f', // red
-	complete: '#388e3c', // green
+	new: '#1976d2',
+	wip: '#f9a825',
+	reject: '#d32f2f',
+	complete: '#388e3c',
+	'': 'transparent',
 };
 
 export const defaultAnnouncements = {
@@ -47,3 +48,24 @@ export const defaultAnnouncements = {
 		return message;
 	},
 };
+
+export function findCardIdByTaskId(
+	tasksByCardId: Record<string, Task[]>,
+	taskId: string
+): string | undefined {
+	for (const [cardId, tasks] of Object.entries(tasksByCardId)) {
+		if (tasks.some((task) => task.id === taskId)) {
+			return cardId;
+		}
+	}
+	return undefined; // not found
+}
+
+export const GhostTask = {
+	id: '-1',
+	title: '',
+	description: '',
+	status: '' ,
+	ownerId: '',
+	assignedUserIds: []
+}

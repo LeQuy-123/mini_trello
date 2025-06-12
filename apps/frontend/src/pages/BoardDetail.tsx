@@ -17,11 +17,15 @@ export default function BoardDetail() {
 		getDetailBoardsStatus,
 		getBoardDetails,
 		boardDetail,
+		resetStatus
 	} = useBoard();
 
 	useEffect(() => {
 		if (id) {
 			getBoardDetails({ id });
+		}
+		return () => {
+			resetStatus()
 		}
 	}, [id]);
 

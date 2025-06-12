@@ -1,6 +1,6 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import { createAsyncThunk } from '@reduxjs/toolkit';
-import CardService, { type  Card } from '@services/cardService';
+import CardService, { type  Card, type CardReorderBody } from '@services/cardService';
 import { showError, showSuccess } from '@utils/helper';
 
 export const getCards = createAsyncThunk(
@@ -99,7 +99,17 @@ export const deleteCard = createAsyncThunk(
 		}
 	}
 );
-
+export const reorderCard = createAsyncThunk(
+	'cards/reorder',
+	async ({ boardId, data }: { boardId: string; data: CardReorderBody }, thunkAPI) => {
+		try {
+			const res = await CardService.reorderCard(boardId, data);
+			return res;
+		} catch (error: any) {
+			return thunkAPI.rejectWithValue(error?.message || 'Failed to delete card');
+		}
+	}
+);
 const getDefaultAsyncState = () => ({
 	loading: false,
 	error: null as string | null,
@@ -113,6 +123,7 @@ interface CardState {
 	create: ReturnType<typeof getDefaultAsyncState>;
 	update: ReturnType<typeof getDefaultAsyncState>;
 	remove: ReturnType<typeof getDefaultAsyncState>;
+	reorder: ReturnType<typeof getDefaultAsyncState>;
 }
 
 const initialState: CardState = {
@@ -123,6 +134,7 @@ const initialState: CardState = {
 	create: getDefaultAsyncState(),
 	update: getDefaultAsyncState(),
 	remove: getDefaultAsyncState(),
+	reorder: getDefaultAsyncState(),
 };
 
 const cardSlice = createSlice({
@@ -179,6 +191,9 @@ const cardSlice = createSlice({
 					if (type === 'create') {
 						state.cards.push(action.payload);
 					}
+					if (type === 'reorder') {
+						state.cards = action.payload; // new list order
+					}
 					if (type === 'update') {
 						const index = state.cards.findIndex((c) => c.id === action.payload.id);
 						if (index !== -1) {
@@ -199,6 +214,8 @@ const cardSlice = createSlice({
 		handleAsync('create', createCard);
 		handleAsync('update', updateCard);
 		handleAsync('remove', deleteCard);
+		handleAsync('reorder', reorderCard);
+
 	},
 });
 

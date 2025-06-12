@@ -10,16 +10,16 @@ import {
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import type { Task } from '@services/taskService';
 import { statusColors } from '@utils/helper';
-import { useSortable } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
+import { useSortable } from '@dnd-kit/react/sortable';
 
 interface TaskItemProps {
 	task: Task;
 	onEdit: (task: Task) => void;
 	onDelete: (taskId: string) => void;
+	taskIndex: number;
 }
 
-const TaskItem: React.FC<TaskItemProps> = ({ task, onEdit, onDelete }) => {
+const TaskItem: React.FC<TaskItemProps> = ({ task, onEdit, onDelete, taskIndex }) => {
 	const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 	const open = Boolean(anchorEl);
 	const theme = useTheme();
@@ -31,17 +31,20 @@ const TaskItem: React.FC<TaskItemProps> = ({ task, onEdit, onDelete }) => {
 
 	const handleClose = () => setAnchorEl(null);
 	const {
-		attributes,
-		listeners,
-		setNodeRef,
-		transform,
-		transition,
+		ref,
 		isDragging
-	} = useSortable({ id: `task-${task.id}`, data: { type: 'task', cardId: task.cardId, taskId: task.id } });
+	} = useSortable({
+		id: task.id,
+		index: taskIndex,
+		type: 'item',
+		accept: 'item',
+		group: task.cardId
+	});
 	return (
 		<Box
 			sx={{
 				p: 1.5,
+				minHeight: '72px',
 				position: 'relative',
 				backgroundColor:
 					theme.palette.mode === 'dark'
@@ -59,12 +62,12 @@ const TaskItem: React.FC<TaskItemProps> = ({ task, onEdit, onDelete }) => {
 					right: 8,
 					opacity: 1,
 				},
-				opacity: isDragging ? 0.2 : 1,
+				opacity: isDragging ? 0.8 : 1,
 				borderLeft: `6px solid ${statusColors[task.status]}`,
-				transform: CSS.Transform.toString(transform),
-				transition,
+
 			}}
-			ref={setNodeRef}
+			ref={ref}
+			data-dragging={isDragging}
 			onClick={() => console.log('Task clicked')}
 
 		>
@@ -72,8 +75,7 @@ const TaskItem: React.FC<TaskItemProps> = ({ task, onEdit, onDelete }) => {
 				pr: 5,
 				userSelect: 'none',
 			}}
-				{...attributes}
-				{...listeners}
+
 			>
 				<Typography variant="subtitle2" fontWeight={500}>
 					{task.title}

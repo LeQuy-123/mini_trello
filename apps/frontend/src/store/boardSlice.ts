@@ -96,6 +96,7 @@ const boardSlice = createSlice({
 	initialState,
 	reducers: {
 		resetStatus(state) {
+			state.board = null;
 			state.get = getDefaultAsyncState();
 			state.getOne = getDefaultAsyncState();
 			state.create = getDefaultAsyncState();

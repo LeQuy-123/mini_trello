@@ -11,139 +11,116 @@ import {
 } from '@mui/material';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import type { Card as CardType } from '@services/cardService';
-import { useEffect, useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useTask } from '@utils/useTask';
 import { CreateTaskModal } from './CreateTaskModal';
 import type { Board } from '@services/boardService'
 import TaskItem from './TaskItem';
 import type { Task } from '@services/taskService';
-import { CSS } from '@dnd-kit/utilities';
-import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
-import { useDndContext, useDroppable } from '@dnd-kit/core';
+import { useSortable } from '@dnd-kit/react/sortable';
+import { useDroppable } from '@dnd-kit/react';
+
 type Props = {
 	card: CardType;
 	board: Board;
-	draggingTaskId?: string | null;
+	cardIndex: number;
 	onClickEdit: () => void;
 	onClickDelete: () => void;
 };
 
-export default function CardComponent({ card, board, onClickEdit, onClickDelete }: Props) {
+
+const CardComponent = React.memo(function CardComponent({ card, board, onClickEdit, onClickDelete, cardIndex }: Props) {
 	const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-	const open = Boolean(anchorEl);
-	const {
-		tasksByCardId,
-		getTasks,
-		deleteTask,
-	} = useTask()
-	useEffect(() => {
-		getTasks({
-			boardId: board.id,
-			cardId: card.id
-		})
-	}, [board.id, card.id])
+	const [openModal, setOpenModal] = useState(false);
+	const [currentTask, setCurrentTask] = useState<Task | undefined>(undefined);
 
-	const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
+	const { tasksByCardId, deleteTask } = useTask();
+	const tasks = tasksByCardId[card.id] || [];
+
+
+	const handleMenuOpen = useCallback((event: React.MouseEvent<HTMLElement>) => {
 		setAnchorEl(event.currentTarget);
-	};
+	}, []);
 
-	const handleMenuClose = () => {
+	const handleMenuClose = useCallback(() => {
 		setAnchorEl(null);
-	};
-	const [openMoodal, setOpenModal] = useState(false);
-	const [currentTask, setCurrentTask] = useState<Task>();
+	}, []);
 
-	const handleClose = () => {
+	const handleCloseModal = useCallback(() => {
 		setOpenModal(false);
-		setCurrentTask(undefined)
-	}
-	const handleOpen = () => {
-		console.log("🚀 ~ handleOpen ~ handleOpen:",)
+		setCurrentTask(undefined);
+	}, []);
 
+	const handleOpenModal = useCallback(() => {
 		setOpenModal(true);
-	}
-	const tasks = tasksByCardId[card.id]
-	const handleDeleteTask = (taskId: string) => {
-		deleteTask({
-			boardId: board.id,
-			cardId: card.id,
-			taskId,
-		})
-	}
-	const handleEditTask = (task: Task) => {
-		setCurrentTask(task)
-		handleOpen()
-	}
-	const {
-		attributes,
-		listeners,
-		setNodeRef,
-		transform,
-		transition,
-		isDragging
-	} = useSortable({ id: `card-${card.id}`, data: { type: 'card', cardId: card.id} });
+	}, []);
 
-	if (!tasks) return <></>
+	const handleDeleteTask = useCallback((taskId: string) => {
+		deleteTask({ boardId: board.id, cardId: card.id, taskId });
+	}, [board.id, card.id, deleteTask]);
+
+	const handleEditTask = useCallback((task: Task) => {
+		setCurrentTask(task);
+		handleOpenModal();
+	}, [handleOpenModal]);
+
+	const {
+		ref: dragRef,
+		isDragging,
+	} = useSortable({
+		id: card.id,
+		index: cardIndex,
+		type: 'card',
+		collisionPriority: 1,
+		accept: ['card'],
+		data: {
+			name: card.name
+		}
+	});
+
 	return (
 		<>
 			<Card
-				ref={setNodeRef}
+				ref={dragRef}
 				sx={{
 					width: 300,
 					minHeight: 60,
 					position: 'relative',
-					opacity: isDragging ? 0.2 : 1,
+					opacity: isDragging ? 0.8 : 1,
 					'&:hover': {
 						boxShadow: (theme) => theme.shadows[4],
 					},
-					transform: CSS.Transform.toString(transform),
-					transition,
 				}}
-
 			>
 				<CardContent>
 					<Stack direction="row" alignItems="center" justifyContent="space-between">
 						<Box
-							{...attributes}
-							{...listeners}
-							sx={{
-								width: '100%',
-								userSelect: 'none',
-								cursor: 'grab',
 
-							}}
+							sx={{ width: '100%', userSelect: 'none', cursor: 'grab' }}
 						>
-							<Typography variant="subtitle1" >
-								{card.name}
-							</Typography>
+							<Typography variant="subtitle1">{card.name}</Typography>
 							{card.description && (
 								<Typography
 									variant="body2"
 									color="text.secondary"
-									sx={{ mt: 0.5, ml: 0.5, width: '100%',  }}
+									sx={{ mt: 0.5, ml: 0.5, width: '100%' }}
 									noWrap
 								>
 									{card.description}
 								</Typography>
 							)}
 						</Box>
-						<Box sx={{position: 'absolute', top: 10, right: 0}}>
+						<Box sx={{ position: 'absolute', top: 10, right: 0 }}>
 							<IconButton onClick={handleMenuOpen}>
 								<MoreVertIcon fontSize="small" />
 							</IconButton>
 						</Box>
 						<Menu
 							anchorEl={anchorEl}
-							open={open}
+							open={Boolean(anchorEl)}
 							onClose={handleMenuClose}
-							anchorOrigin={{
-								vertical: 'bottom',
-								horizontal: 'right',
-							}}
-							transformOrigin={{
-								vertical: 'top',
-								horizontal: 'right',
-							}}
+							anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+							transformOrigin={{ vertical: 'top', horizontal: 'right' }}
 						>
 							<MenuItem
 								onClick={() => {
@@ -163,67 +140,76 @@ export default function CardComponent({ card, board, onClickEdit, onClickDelete 
 							</MenuItem>
 						</Menu>
 					</Stack>
-					<DroppableCardArea  card={card}>
-						<SortableContext
-							items={tasks.length > 0 ? tasks.map((t) => `task-${t.id}`) : ['empty']}
-							id={`tasks-${card.id}`}
-							strategy={verticalListSortingStrategy}
-						>
-							<Stack
-								sx={{
-									backgroundColor: (theme) => theme.palette.background.paper,
-									p: 1,
-									minHeight: 60,
-									borderRadius: 1,
-									gap: 1,
-									mt: 2,
-								}}
-							>
-								{tasks?.map((task) => (
-									<TaskItem
-										key={task.id}
-										task={task}
-										onEdit={(task) => handleEditTask(task)}
-										onDelete={(id) => handleDeleteTask(id)}
-									/>
-								))}
-							</Stack>
-						</SortableContext>
-					</DroppableCardArea>
 
+					<ListTask
+						onClickDelete={handleDeleteTask}
+						onClickEdit={handleEditTask}
+						tasks={tasks}
+						card={card}
+					/>
 					<Stack sx={{ mt: 2 }}>
-						<Button variant='outlined' onClick={handleOpen}>
+						<Button variant="outlined" onClick={handleOpenModal}>
 							+ Create task
 						</Button>
 					</Stack>
 				</CardContent>
 			</Card>
 
-			{card &&
-				<CreateTaskModal
-					card={card}
-					open={openMoodal}
-					onClose={handleClose}
-					board={board}
-					task={currentTask}
-				/>
-			}
+			<CreateTaskModal
+				card={card}
+				open={openModal}
+				onClose={handleCloseModal}
+				board={board}
+				task={currentTask}
+			/>
 		</>
 	);
+});
+
+export default CardComponent;
+
+type ListTaskProps = {
+	tasks: Task[]
+	card: CardType
+	onClickEdit: (task: Task) => void;
+	onClickDelete: (taskId: string) => void;
 }
-
-
-
-function DroppableCardArea({   children, card }: {  children: React.ReactNode, card: CardType }) {
-	const { active } = useDndContext();
-	const isDraggingTask = active?.data?.current?.type === 'task';
-	const { setNodeRef } = useDroppable({
-		id: `tasks-${card.id}`,
-		data: { type: 'tasks', cardId: card.id },
+const ListTask = ({ tasks, card,  onClickEdit, onClickDelete }: ListTaskProps) => {
+	const { isDropTarget, ref } = useDroppable({
+		id: `drop-${card.id}`,
+		type: 'card',
+		accept: 'item',
+		collisionPriority: 0,
 	});
 	return (
-		<div ref={isDraggingTask ? setNodeRef : undefined}>
-			{children}
-		</div>
+		<Stack
+			sx={{
+				backgroundColor: (theme) => isDropTarget ? theme.palette.action.selected : theme.palette.background.paper,
+				p: 1,
+				minHeight: 60,
+				borderRadius: 1,
+				gap: 1,
+				mt: 2,
+			}}
+			ref={ref}
+		>
+			{tasks.map((task, index) => {
+				if (!task) return;
+				return (
+					<TaskItem
+						key={task.id}
+						task={task}
+						taskIndex={index}
+						onEdit={onClickEdit}
+						onDelete={onClickDelete}
+					/>
+				)
+			})}
+
+		</Stack>
 	);
 }
+
+
+
+

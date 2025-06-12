@@ -1,4 +1,4 @@
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk, type PayloadAction } from '@reduxjs/toolkit';
 import TaskService, { type Task, type CreateTaskBody } from '@services/taskService';
 import { getDefaultAsyncState, showError, showSuccess } from '@utils/helper';
 import type { AsyncStatus } from '@utils/type';
@@ -131,9 +131,41 @@ const taskSlice = createSlice({
 			state.update = getDefaultAsyncState();
 			state.getOne = getDefaultAsyncState();
 		},
+		reorderTasks: (
+			state,
+			action: PayloadAction<{
+				sourceCardId: string;
+				destinationCardId: string;
+				taskId: string;
+				newIndex: number;
+			}>
+		) => {
+			const { sourceCardId, destinationCardId, taskId, newIndex } = action.payload;
+			const sourceTasks = state.tasksByCardId[sourceCardId] || [];
+			const destinationTasks = state.tasksByCardId[destinationCardId] || [];
+			const taskIndex = sourceTasks.findIndex((t) => t.id === taskId);
+			if (taskIndex === -1) return;
+			const movedTask = sourceTasks[taskIndex];
+
+			const newSourceTasks =
+				sourceCardId === destinationCardId
+					? [...sourceTasks]
+					: sourceTasks.filter((_, i) => i !== taskIndex);
+
+			const newDestinationTasks =
+				sourceCardId === destinationCardId ? newSourceTasks : [...destinationTasks];
+
+			if (sourceCardId === destinationCardId) {
+				newDestinationTasks.splice(taskIndex, 1);
+			}
+
+			newDestinationTasks.splice(newIndex, 0, movedTask);
+			state.tasksByCardId[sourceCardId] = newSourceTasks;
+			state.tasksByCardId[destinationCardId] = newDestinationTasks;
+		},
 	},
 	extraReducers: (builder) => {
-		const handleAsync = <K extends keyof Omit<TaskState, 'tasksByCardId'| 'task'>>(
+		const handleAsync = <K extends keyof Omit<TaskState, 'tasksByCardId' | 'task'>>(
 			type: K,
 			thunk: any
 		) => {
@@ -176,7 +208,6 @@ const taskSlice = createSlice({
 						const tasks = state.tasksByCardId[cardId] || [];
 						state.tasksByCardId[cardId] = tasks.filter((task) => task.id !== taskId);
 					}
-
 				})
 				.addCase(thunk.rejected, (state, action) => {
 					state[type].loading = false;
@@ -192,5 +223,5 @@ const taskSlice = createSlice({
 	},
 });
 
-export const { resetTaskStatus } = taskSlice.actions;
+export const { resetTaskStatus, reorderTasks } = taskSlice.actions;
 export default taskSlice.reducer;

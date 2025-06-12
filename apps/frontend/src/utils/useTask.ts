@@ -7,6 +7,7 @@ import {
 	createTask,
 	updateTask,
 	deleteTask,
+	reorderTasks,
 } from '@store/taskSlice';
 import type { CreateTaskBody } from '@services/taskService';
 
@@ -43,5 +44,24 @@ export const useTask = () => {
 		deleteTask: (params: { boardId: string; cardId: string; taskId: string }) =>
 			dispatch(deleteTask(params)),
 		resetTaskStatus: () => dispatch(resetTaskStatus()),
+		reorderTasks: ({
+			sourceCardId,
+			overCardId,
+			activeId,
+			newIndex
+		}: {
+			sourceCardId: string;
+			overCardId: string;
+			activeId: string;
+			newIndex: number;
+		}) =>
+			dispatch(
+				reorderTasks({
+					sourceCardId,
+					destinationCardId: overCardId,
+					taskId: activeId,
+					newIndex,
+				})
+			),
 	};
 };

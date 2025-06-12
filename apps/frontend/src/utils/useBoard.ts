@@ -1,7 +1,13 @@
 import { useDispatch, useSelector } from 'react-redux';
 import type { AppDispatch, RootState } from '@store/index';
-import { createBoard, deleteBoard, getBoards, updateBoard, getBoard } from '@store/boardSlice';
-import { resetStatus } from '@store/authSlice';
+import {
+	createBoard,
+	deleteBoard,
+	getBoards,
+	updateBoard,
+	getBoard,
+	resetStatus,
+} from '@store/boardSlice';
 
 export const useBoard = () => {
 	const dispatch = useDispatch<AppDispatch>();
