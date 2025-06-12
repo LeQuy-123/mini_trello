@@ -196,13 +196,13 @@ const taskSlice = createSlice({
 						state.task = action.payload;
 					}
 					if (type === 'move') {
-						// const { originalCard, tasksOriginal, newCard, tasksNews } = action.payload;
-						// state.tasksByCardId[originalCard] = tasksOriginal;
-						// state.tasksByCardId[newCard] = tasksNews;
+						const { originalCard, tasksOriginal, newCard, tasksNews } = action.payload;
+						state.tasksByCardId[originalCard] = tasksOriginal;
+						state.tasksByCardId[newCard] = tasksNews;
 					}
 					if (type === 'reorder') {
-						// const { cardId, tasks } = action.payload;
-						// state.tasksByCardId[cardId] = tasks;
+						const { cardId, tasks } = action.payload;
+						state.tasksByCardId[cardId] = tasks;
 					}
 
 					if (type === 'create') {

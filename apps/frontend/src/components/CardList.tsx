@@ -122,7 +122,20 @@ export default function CardList({
 						sourceId: String(tasks[sourceIndex].id),
 						targetId: String(tasks[targetIndex].id)
 					}
-				})
+				}).unwrap().then(() => {
+					emit('board-updated', {
+						boardId: board.id,
+						update: {
+							type: 'reorder-task', data: {
+								boardId: board.id,
+								cardId: source.sortable.group,
+								data: {
+									sourceId: String(tasks[sourceIndex].id),
+									targetId: String(tasks[targetIndex].id)
+								}
+						}}
+					});
+				});
 			} else {// move task to diffrent 1 group
 				const tasksOriginal = tasksByCardId?.[sourceGroup]
 				const tasksNew = tasksByCardId?.[targetGroup]
@@ -136,7 +149,21 @@ export default function CardList({
 						targetId: String(tasksNew[targetIndex].id),
 						targetGroup
 					}
-				})
+				}).unwrap().then(() => {
+					emit('board-updated', {
+						boardId: board.id,
+						update: {
+							type: 'reorder-task', data: {
+								boardId: board.id,
+								cardId: sourceGroup,
+								data: {
+									sourceId: String(tasksOriginal[sourceIndex].id),
+									targetId: String(tasksNew[targetIndex].id),
+									targetGroup
+								}
+						} }
+					});
+				});
 
 			}
 

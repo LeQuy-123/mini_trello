@@ -11,6 +11,7 @@ import CardList from '@components/CardList';
 import { useSocket } from '@utils/useSocket';
 import { useAuth } from '@utils/useAuth';
 import { useCard } from '@utils/useCard';
+import { useTask } from '@utils/useTask';
 
 export default function BoardDetail() {
 	const { id } = useParams<{ id: string }>();
@@ -21,6 +22,7 @@ export default function BoardDetail() {
 		boardDetail,
 		resetStatus
 	} = useBoard();
+	const {getTasks} = useTask()
 	const { socket, emit, isConnected } = useSocket(token!);
 	const {
 		getCards
@@ -39,11 +41,24 @@ export default function BoardDetail() {
 		emit('join-board', id);
 
 		const onUpdate = (update: any) => {
-			console.log("🚀 ~ onUpdate ~ update:", update)
-			getCards({
-				boardId: id,
+			if (update.type === 'reorder-task') {
+				console.log("🚀 ~ onUpdate ~ update:", update.data)
+				getTasks({
+					boardId: id,
+					cardId: update.data?.cardId
+				})
+				if (update.data?.cardId?.data?.targetGroup) {
+					getTasks({
+						boardId: id,
+						cardId: update.data?.targetGroup
+					})
+				}
+			} else {
+				getCards({
+					boardId: id,
+				})
+			}
 
-			})
 		};
 
 		socket?.on('board-update', onUpdate);
