@@ -25,7 +25,7 @@ export const sendInvitation = createAsyncThunk(
 			showSuccess('Invitation sent');
 			return res;
 		} catch (error: any) {
-			showError(error?.message || 'Failed to send invitation');
+			showError(error.response?.data?.error || 'Failed to send invitation');
 			return thunkAPI.rejectWithValue(error?.message || 'Failed to send invitation');
 		}
 	}
@@ -109,7 +109,7 @@ const invitationSlice = createSlice({
 					}
 					if (type === 'respond') {
 						const { invite_id, status } = action.payload;
-						const index = state.invitations.findIndex((i) => i.inviteId === invite_id);
+						const index = state.invitations.findIndex((i) => i.id === invite_id);
 						if (index !== -1) {
 							state.invitations[index].status = status;
 						}
