@@ -5,21 +5,26 @@ import {
 import { useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useBoard } from '@utils/useBoard';
-import LoadingPage from '@components/LoadingPage';
 import ErrorPage from '@components/ErrorPage';
 import DrawerLayout from '@components/DrawerLayout';
 import CardList from '@components/CardList';
+import { useSocket } from '@utils/useSocket';
+import { useAuth } from '@utils/useAuth';
+import { useCard } from '@utils/useCard';
 
 export default function BoardDetail() {
 	const { id } = useParams<{ id: string }>();
-
+	const {token} = useAuth()
 	const {
 		getDetailBoardsStatus,
 		getBoardDetails,
 		boardDetail,
 		resetStatus
 	} = useBoard();
-
+	const { socket, emit, isConnected } = useSocket(token!);
+	const {
+		getCards
+	} = useCard();
 	useEffect(() => {
 		if (id) {
 			getBoardDetails({ id });
@@ -28,8 +33,27 @@ export default function BoardDetail() {
 			resetStatus()
 		}
 	}, [id]);
+	useEffect(() => {
+		if (!id) return;
+		if (!isConnected) return;
+		emit('join-board', id);
 
-	if (getDetailBoardsStatus.loading) return <LoadingPage />;
+		const onUpdate = (update: any) => {
+			console.log("🚀 ~ onUpdate ~ update:", update)
+			getCards({
+				boardId: id,
+
+			})
+		};
+
+		socket?.on('board-update', onUpdate);
+
+		return () => {
+			emit('leave-board', id);
+			socket?.off('board-update', onUpdate);
+		};
+	}, [isConnected, emit, socket, id]);
+
 	if (getDetailBoardsStatus.error  ) return <ErrorPage message={getDetailBoardsStatus.error} />;
 
 	return (

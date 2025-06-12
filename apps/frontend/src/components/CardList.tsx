@@ -12,15 +12,17 @@ import { useEffect, useState } from 'react';
 import type { Card as CardType } from '@services/cardService';
 import { useCard } from '@utils/useCard';
 import CardComponent from './CardComponent';
-
+import { useSocket } from '@utils/useSocket';
 import { useTask } from '@utils/useTask';
 import { DragDropProvider } from '@dnd-kit/react';
+import { useAuth } from '@utils/useAuth';
 type Props = {
 	board: Board
 }
 export default function CardList({
 	board
 }: Props) {
+	const { token } = useAuth()
 	const {
 		cards,
 		getCards,
@@ -30,6 +32,8 @@ export default function CardList({
 
 	} = useCard()
 	const {  getTasks, reorderTasks, tasksByCardId, moveTasks } = useTask()
+	const { emit } = useSocket(token!);
+
 	useEffect(() => {
 		fetchData()
 	}, [])
@@ -92,7 +96,12 @@ export default function CardList({
 					sourceId: String(cards[sourceIndex].id),
 					targetId: String(cards[targetIndex].id)
 				}
-			})
+			}).unwrap().then(() => {
+				emit('board-updated', {
+					boardId: board.id,
+					update: { type: 'reorder-card' }
+				});
+			});
 		}
 
 		if (source.type === 'item') { //move task

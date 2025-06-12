@@ -8,16 +8,16 @@ import swaggerJsdoc from 'swagger-jsdoc';
 import authRoute from './routes/auth';
 import boardRoutes from './routes/boards';
 import invitationsRouter from './routes/invitations';
-import cardRouter from './routes/cards';
-
+import { initSocket } from './socket';
 import path from 'path';
-import tasksRouter from './routes/tasks';
 import userRouter from './routes/users';
+import http from 'http';
 
 const PORT = process.env.PORT || 3001;
 
 const app = express();
-
+const server = http.createServer(app);
+initSocket(server);
 // Swagger config
 const swaggerOptions: swaggerJsdoc.Options = {
 	definition: {
@@ -72,7 +72,7 @@ app.use('/', (req, res) => {
 	res.send('Hello world');
 });
 
-app.listen(PORT, () => {
+server.listen(PORT, () => {
 	console.log(`Server running on http://localhost:${PORT}`);
 	console.log(`Swagger docs available at http://localhost:${PORT}/api`);
 });
