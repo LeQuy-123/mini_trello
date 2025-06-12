@@ -114,7 +114,7 @@ export default function CardList({
 						targetId: String(tasks[targetIndex].id)
 					}
 				})
-			} else {
+			} else {// move task to diffrent 1 group
 				const tasksOriginal = tasksByCardId?.[sourceGroup]
 				const tasksNew = tasksByCardId?.[targetGroup]
 				if (!tasksOriginal[sourceIndex]?.id || !tasksNew[targetIndex]?.id) return
@@ -128,11 +128,26 @@ export default function CardList({
 						targetGroup
 					}
 				})
+
 			}
 
 		}
-		if (target?.type === 'card') {
-			console.log("🚀 ~ handleDragEnd ~ target:", target)
+		if (target.id?.toString()?.includes('drop-')) { //special case move item to empty card
+			const targetGroup = target.id?.toString()?.replace('drop-', '')
+			const sourceGroup = source.sortable.initialGroup;
+			const tasksOriginal = tasksByCardId?.[sourceGroup];
+			const sourceIndex = source.sortable.initialIndex;
+			moveTasks({
+				boardId: board.id,
+				cardId: sourceGroup,
+				data: {
+					sourceId: String(tasksOriginal[sourceIndex].id),
+					targetId: '-1',
+					targetGroup
+				}
+			})
+			console.log("🚀 ~ handleDragEnd ~ target:", targetGroup)
+
 		}
 	}
 

@@ -559,6 +559,8 @@ router.patch('/reorder', authenticate, checkBoardAccess, async (req: Request, re
 router.patch('/move', authenticate, checkBoardAccess, async (req: Request, res: Response) => {
 	const { id: sourceCardId } = req.params;
 	const { sourceId, targetId, targetGroup } = req.body;
+	console.log("🚀 ~ router.patch ~ sourceId:", sourceId)
+	console.log("🚀 ~ router.patch ~ targetId:", targetId)
 
 	if (!sourceId || !targetId || !targetGroup) {
 		res.status(400).json({ error: 'Missing required fields' });
@@ -594,7 +596,7 @@ router.patch('/move', authenticate, checkBoardAccess, async (req: Request, res: 
 		const targetIndex = targetTasks.findIndex((task) => task.id === targetId);
 		// console.log('🚀 ~ router.patch ~ targetIndex:',targetTasks, targetId);
 
-		if (sourceIndex === -1 || targetIndex === -1) {
+		if (sourceIndex === -1 || (targetIndex === -1 && targetId != -1)) {
 			res.status(400).json({ error: 'Task not found in one of the cards' });
 			return
 		}
