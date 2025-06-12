@@ -4,6 +4,9 @@ export type TaskReorderBody = {
 	sourceId: string;
 	targetId: string;
 };
+export type TaskMoveBody = TaskReorderBody & {
+	targetGroup: string;
+};
 export interface Task {
 	id: string;
 	cardId: string;
@@ -89,8 +92,16 @@ class TaskService {
 		await apiClient.delete(`/boards/${boardId}/cards/${cardId}/tasks/${taskId}`);
 		return true;
 	}
-	static async reorderCard(boardId: string, cardId: string , data: TaskReorderBody): Promise<void> {
+	static async reorderTask(
+		boardId: string,
+		cardId: string,
+		data: TaskReorderBody
+	): Promise<void> {
 		const res = await apiClient.patch(`/boards/${boardId}/cards/${cardId}/tasks/reorder`, data);
+		return res.data;
+	}
+	static async moveTask(boardId: string, cardId: string, data: TaskMoveBody): Promise<void> {
+		const res = await apiClient.patch(`/boards/${boardId}/cards/${cardId}/tasks/move`, data);
 		return res.data;
 	}
 }

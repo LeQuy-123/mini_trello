@@ -26,9 +26,10 @@ export default function CardList({
 		getCards,
 		getCardsStatus,
 		deleteCard,
-		reorderCard
+		reorderCard,
+
 	} = useCard()
-	const {  getTasks, reorderTasks, tasksByCardId } = useTask()
+	const {  getTasks, reorderTasks, tasksByCardId, moveTasks } = useTask()
 	useEffect(() => {
 		fetchData()
 	}, [])
@@ -75,6 +76,7 @@ export default function CardList({
 
 	const handleDragEnd = (event: any) => {
 		const { source, target } = event.operation;
+
 		if(!target) return;
 		if (event.canceled) {
 			return;
@@ -83,6 +85,7 @@ export default function CardList({
 			const sourceIndex = source.sortable.initialIndex;
 			const targetIndex = source.sortable.index
 			if(sourceIndex === targetIndex) return;
+			if (!cards[sourceIndex]?.id || !cards[targetIndex]?.id) return
 			reorderCard({
 				boardId: board.id,
 				data: {
@@ -92,20 +95,44 @@ export default function CardList({
 			})
 		}
 
-		if (source.type === 'item') { //move card
+		if (source.type === 'item') { //move task
 			const sourceIndex = source.sortable.initialIndex;
 			const targetIndex = source.sortable.index;
-			if (sourceIndex === targetIndex) return;
-			const tasks = tasksByCardId?.[source.sortable.group]
-			reorderTasks({
-				boardId: board.id,
-				cardId: source.sortable.group,
-				data: {
-					sourceId: String(tasks[sourceIndex].id),
-					targetId: String(tasks[targetIndex].id)
-				}
-			})
 
+			const sourceGroup = source.sortable.initialGroup;
+			const targetGroup = source.sortable.group;
+
+			if (sourceGroup === targetGroup) { // move task inside 1 group
+				if (sourceIndex === targetIndex) return;
+				const tasks = tasksByCardId?.[source.sortable.group]
+				if (!tasks[sourceIndex]?.id || !tasks[targetIndex]?.id) return
+				reorderTasks({
+					boardId: board.id,
+					cardId: source.sortable.group,
+					data: {
+						sourceId: String(tasks[sourceIndex].id),
+						targetId: String(tasks[targetIndex].id)
+					}
+				})
+			} else {
+				const tasksOriginal = tasksByCardId?.[sourceGroup]
+				const tasksNew = tasksByCardId?.[targetGroup]
+				if (!tasksOriginal[sourceIndex]?.id || !tasksNew[targetIndex]?.id) return
+
+				moveTasks({
+					boardId: board.id,
+					cardId: sourceGroup,
+					data: {
+						sourceId: String(tasksOriginal[sourceIndex].id),
+						targetId: String(tasksNew[targetIndex].id),
+						targetGroup
+					}
+				})
+			}
+
+		}
+		if (target?.type === 'card') {
+			console.log("🚀 ~ handleDragEnd ~ target:", target)
 		}
 	}
 

@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import TaskService, { type Task, type CreateTaskBody, type TaskReorderBody } from '@services/taskService';
+import TaskService, { type Task, type CreateTaskBody, type TaskReorderBody, type TaskMoveBody } from '@services/taskService';
 import { getDefaultAsyncState, showError, showSuccess } from '@utils/helper';
 import type { AsyncStatus } from '@utils/type';
 import { decrementTaskCount, incrementTaskCount } from './cardSlice';
@@ -13,6 +13,7 @@ interface TaskState {
 	update: AsyncStatus;
 	getOne: AsyncStatus;
 	reorder: ReturnType<typeof getDefaultAsyncState>;
+	move: AsyncStatus;
 }
 
 
@@ -25,6 +26,7 @@ const initialState: TaskState = {
 	update: getDefaultAsyncState(),
 	getOne: getDefaultAsyncState(),
 	reorder: getDefaultAsyncState(),
+	move: getDefaultAsyncState(),
 };
 
 
@@ -129,10 +131,32 @@ export const reorderTasks = createAsyncThunk(
 		thunkAPI
 	) => {
 		try {
-			const tasks = await TaskService.reorderCard(boardId,cardId, data);
+			const tasks = await TaskService.reorderTask(boardId,cardId, data);
 			return { cardId, tasks };
 		} catch (error: any) {
-			return thunkAPI.rejectWithValue(error?.message || 'Failed to delete card');
+			return thunkAPI.rejectWithValue(error?.message || 'Failed to reorder task');
+		}
+	}
+);
+export const moveTasks = createAsyncThunk(
+	'task/move',
+	async (
+		{ boardId, data, cardId }: { boardId: string; data: TaskMoveBody; cardId: string },
+		thunkAPI
+	) => {
+		try {
+			TaskService.moveTask(boardId, cardId, data);
+			const tasksOriginal = await TaskService.getTasks({ boardId, cardId });
+			const tasksNews = await TaskService.getTasks({ boardId, cardId: data.targetGroup });
+
+			return {
+				originalCard: cardId,
+				tasksOriginal,
+				newCard: data.targetGroup,
+				tasksNews,
+			};
+		} catch (error: any) {
+			return thunkAPI.rejectWithValue(error?.message || 'Failed to move task');
 		}
 	}
 );
@@ -145,6 +169,9 @@ const taskSlice = createSlice({
 			state.create = getDefaultAsyncState();
 			state.update = getDefaultAsyncState();
 			state.getOne = getDefaultAsyncState();
+			state.move = getDefaultAsyncState();
+			state.reorder = getDefaultAsyncState();
+
 		},
 		// reorderTasks: (
 		// 	state,
@@ -199,6 +226,11 @@ const taskSlice = createSlice({
 					if (type === 'getOne') {
 						state.task = action.payload;
 					}
+					if (type === 'move') {
+						const { originalCard, tasksOriginal, newCard, tasksNews } = action.payload;
+						state.tasksByCardId[originalCard] = tasksOriginal;
+						state.tasksByCardId[newCard] = tasksNews;
+					}
 					if (type === 'reorder') {
 						const { cardId, tasks } = action.payload;
 						state.tasksByCardId[cardId] = tasks;
@@ -240,6 +272,7 @@ const taskSlice = createSlice({
 		handleAsync('create', createTask);
 		handleAsync('update', updateTask);
 		handleAsync('reorder', reorderTasks);
+		handleAsync('move', moveTasks);
 	},
 });
 

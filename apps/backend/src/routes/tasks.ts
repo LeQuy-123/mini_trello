@@ -469,8 +469,6 @@ router.delete(
 router.patch('/reorder', authenticate, checkBoardAccess, async (req: Request, res: Response) => {
 	const { id: cardId } = req.params;
 	const { sourceId, targetId } = req.body;
-
-
 	try {
 		const snapshot = await db
 			.collection('tasks')
@@ -505,6 +503,128 @@ router.patch('/reorder', authenticate, checkBoardAccess, async (req: Request, re
 	} catch (error) {
 		console.error(error);
 		res.status(500).json({ error: 'Failed to reorder tasks', details: error });
+	}
+});
+
+
+/**
+ * @swagger
+ * /boards/{boardId}/cards/{id}/tasks/move:
+ *   patch:
+ *     summary: Move and reorder a task across cards
+ *     description: Updates a task's cardId and cardIndex to reflect movement from one card (group) to another.
+ *     tags: [Tasks]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: boardId
+ *         required: true
+ *         schema:
+ *           type: string
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: Source card ID (original group)
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - sourceId
+ *               - targetId
+ *               - targetGroup
+ *             properties:
+ *               sourceId:
+ *                 type: string
+ *                 description: Task being moved
+ *               targetId:
+ *                 type: string
+ *                 description: Task to position after (or before)
+ *               targetGroup:
+ *                 type: string
+ *                 description: Destination card ID (new group)
+ *     responses:
+ *       200:
+ *         description: Task moved and reordered
+ *       400:
+ *         description: Task not found
+ *       500:
+ *         description: Server error
+ */
+router.patch('/move', authenticate, checkBoardAccess, async (req: Request, res: Response) => {
+	const { id: sourceCardId } = req.params;
+	const { sourceId, targetId, targetGroup } = req.body;
+
+	if (!sourceId || !targetId || !targetGroup) {
+		res.status(400).json({ error: 'Missing required fields' });
+		return
+	}
+
+	try {
+		const sourceSnapshot = await db
+			.collection('tasks')
+			.where('cardId', '==', sourceCardId)
+			.orderBy('cardIndex')
+			.get();
+
+		const targetSnapshot = await db
+			.collection('tasks')
+			.where('cardId', '==', targetGroup)
+			.orderBy('cardIndex')
+			.get();
+
+		const sourceTasks = sourceSnapshot.docs.map((doc) => ({
+			id: doc.id,
+			...doc.data(),
+		}));
+		console.log('🚀 ~ router.patch ~ sourceSnapshot:', sourceTasks);
+
+		const targetTasks = targetSnapshot.docs.map((doc) => ({
+			id: doc.id,
+			...doc.data(),
+		}));
+
+		const sourceIndex = sourceTasks.findIndex((task) => task.id === sourceId);
+		// console.log('🚀 ~ router.patch ~ sourceIndex:',sourceTasks, sourceId);
+		const targetIndex = targetTasks.findIndex((task) => task.id === targetId);
+		// console.log('🚀 ~ router.patch ~ targetIndex:',targetTasks, targetId);
+
+		if (sourceIndex === -1 || targetIndex === -1) {
+			res.status(400).json({ error: 'Task not found in one of the cards' });
+			return
+		}
+
+		const [movedTask] = sourceTasks.splice(sourceIndex, 1);
+
+		targetTasks.splice(targetIndex, 0, movedTask);
+
+		const batch = db.batch();
+
+		sourceTasks.forEach((task, i) => {
+			const ref = db.collection('tasks').doc(task.id);
+			batch.update(ref, { cardIndex: i });
+		});
+
+		targetTasks.forEach((task, i) => {
+			const ref = db.collection('tasks').doc(task.id);
+			const update: any = { cardIndex: i };
+			if (task.id === movedTask.id) {
+				update.cardId = targetGroup;
+			}
+			batch.update(ref, update);
+		});
+
+		await batch.commit();
+
+		res.status(200).json({ message: 'Task moved and reordered' });
+	} catch (error) {
+		console.error(error);
+		res.status(500).json({ error: 'Failed to move task', details: error });
 	}
 });
 

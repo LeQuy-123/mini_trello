@@ -8,8 +8,9 @@ import {
 	updateTask,
 	deleteTask,
 	reorderTasks,
+	moveTasks,
 } from '@store/taskSlice';
-import type { CreateTaskBody, TaskReorderBody } from '@services/taskService';
+import type { CreateTaskBody, TaskMoveBody, TaskReorderBody } from '@services/taskService';
 
 export const useTask = () => {
 	const dispatch = useDispatch<AppDispatch>();
@@ -53,5 +54,14 @@ export const useTask = () => {
 			cardId: string;
 			data: TaskReorderBody;
 		}) => dispatch(reorderTasks({ boardId, cardId, data })),
+		moveTasks: ({
+			boardId,
+			cardId,
+			data,
+		}: {
+			boardId: string;
+			cardId: string;
+			data: TaskMoveBody;
+		}) => dispatch(moveTasks({ boardId, cardId, data })),
 	};
 };
