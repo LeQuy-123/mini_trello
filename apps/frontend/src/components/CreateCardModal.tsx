@@ -5,6 +5,8 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import CustomTextField from './CustomTextField';
 import { useCard } from '@utils/useCard';
+import { useSocket } from '@utils/useSocket';
+import { useAuth } from '@utils/useAuth';
 
 type CreateCardForm = {
 	name: string;
@@ -30,6 +32,9 @@ export const CreateCardModal: React.FC<CreateCardModalProps> = ({
 	boardId,
 }) => {
 	const { createCard, updateCard, createCardsStatus, updateCardsStatus } = useCard();
+	const { token } = useAuth();
+	const { emit } = useSocket(token!);
+
 	const {
 		control,
 		handleSubmit,
@@ -54,6 +59,10 @@ export const CreateCardModal: React.FC<CreateCardModalProps> = ({
 				.finally(() => {
 					reset();
 					onClose();
+					emit('board-updated', {
+						boardId: boardId,
+						update: { type: 'reorder-card' },
+					});
 				});
 		} else {
 			createCard(boardId, data)
@@ -61,6 +70,10 @@ export const CreateCardModal: React.FC<CreateCardModalProps> = ({
 				.finally(() => {
 					reset();
 					onClose();
+					emit('board-updated', {
+						boardId: boardId,
+						update: { type: 'reorder-card' },
+					});
 				});
 		}
 	};

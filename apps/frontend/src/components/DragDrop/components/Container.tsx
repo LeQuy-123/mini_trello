@@ -97,7 +97,7 @@ export const Container = forwardRef<HTMLDivElement, Props>(
 						title={
 							<Box
 								onClick={() => onLabelClick?.()}
-								sx={{ maxWidth: 250, px: 1, pb: 1, borderRadius: 1, '&:hover': onLabelClick ? { backgroundColor: theme.palette.action.hover , cursor: 'pointer'} : undefined }}>
+								sx={{ maxWidth: 250, px: 1, pb: 1, borderRadius: 1, '&:hover': onLabelClick ? { textDecorationLine: 'underline', cursor: 'pointer'} : undefined }}>
 								<Typography variant="h6" noWrap>
 									{data?.name}
 								</Typography>

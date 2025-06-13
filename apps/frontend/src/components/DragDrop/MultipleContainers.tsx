@@ -9,8 +9,6 @@ import {
 	DragOverlay,
 	type DropAnimation,
 	getFirstCollision,
-	KeyboardSensor,
-	MouseSensor,
 	TouchSensor,
 	type Modifiers,
 	type UniqueIdentifier,
@@ -21,6 +19,7 @@ import {
 	defaultDropAnimationSideEffects,
 	type Over,
 	type Active,
+	PointerSensor,
 } from '@dnd-kit/core';
 import {
 	SortableContext,
@@ -28,7 +27,6 @@ import {
 	type SortingStrategy,
 	horizontalListSortingStrategy,
 } from '@dnd-kit/sortable';
-import { coordinateGetter as multipleContainersCoordinateGetter } from '@utils/helper';
 
 import { Item, Container } from './components';
 
@@ -83,9 +81,18 @@ interface Props {
 	scrollable?: boolean;
 	vertical?: boolean;
 	onRemoveTask: (task: Task) => void;
+	onTaskClick: (card: Card, task?: Task) => void;
 	onRemoveCard: (card: Card) => void;
 	onReorderCard: (data: { active: Active, over: Over | null }) => void;
 	onCardClick: (card?: Card) => void;
+	onReorderTask: (data: {
+		sourceId: string,
+		targetId: string,
+		sourceGroup: string,
+		targetGroup: string,
+	}) => void;
+
+
 }
 
 export function MultipleContainers({
@@ -93,7 +100,6 @@ export function MultipleContainers({
 	handle = false,
 	items: initialItems,
 	containerStyle,
-	coordinateGetter = multipleContainersCoordinateGetter,
 	getItemStyles = () => ({}),
 	wrapperStyle = () => ({}),
 	minimal = false,
@@ -106,6 +112,8 @@ export function MultipleContainers({
 	onRemoveCard,
 	onReorderCard,
 	onCardClick,
+	onReorderTask,
+	onTaskClick
 }: Props) {
 
 	// Hooks & State
@@ -170,11 +178,18 @@ export function MultipleContainers({
 	}, [activeId, items]);
 
 	const sensors = useSensors(
-		useSensor(MouseSensor),
+		// useSensor(MouseSensor),
 		useSensor(TouchSensor),
-		useSensor(KeyboardSensor, {
-			coordinateGetter,
+		// useSensor(KeyboardSensor, {
+		// 	coordinateGetter,
+		// }),
+		useSensor(PointerSensor, {
+			activationConstraint: {
+				delay: 100,
+				tolerance: 5,
+			},
 		})
+
 	);
 	const isCardId = (id: UniqueIdentifier) => items.some((card) => card.id === id);
 
@@ -265,7 +280,6 @@ export function MultipleContainers({
 				}
 			}}
 			onDragEnd={({ active, over }) => {
-				console.log("🚀 ~ active:", active)
 				if (!over || !active) return;
 
 				if (isSortingCard) {
@@ -285,8 +299,16 @@ export function MultipleContainers({
 					onReorderCard({ active, over })
 					return;
 				} else {
+					if (active.id === over.id) return;
 					const activeCard = findCardByTaskId(String(active.id));
 					const overCard = findCardByTaskId(String(over.id)) ?? findCardById(over.id);
+					onReorderTask({
+						sourceId: String(active.id),
+						targetId: String(over.id),
+						sourceGroup: String(activeCard?.id),
+						targetGroup: overCard?.id || String(active.id)
+					})
+
 					if (!activeCard || !overCard) return;
 
 					const fromTasks = [...activeCard.tasks];
@@ -297,12 +319,8 @@ export function MultipleContainers({
 					if (fromIndex === -1) return;
 
 					const [movedTask] = fromTasks.splice(fromIndex, 1);
-					let insertAt = overIndex >= 0 ? overIndex : toTasks.length;
+					const insertAt = overIndex >= 0 ? overIndex : toTasks.length;
 
-					// Moving within same card and downward
-					if (activeCard.id === overCard.id && insertAt > fromIndex) {
-						insertAt -= 0;
-					}
 					if (activeCard.id === overCard.id) {
 						fromTasks.splice(insertAt, 0, movedTask);
 						setItems(items.map(card =>
@@ -372,9 +390,15 @@ export function MultipleContainers({
 											getIndex={getTaskIndex}
 											status={task.status}
 											onRemove={() => onRemoveTask(task)}
+											onTaskClick={() => onTaskClick(card, task)}
 										/>
 									))}
-
+									<Item
+										value={'+ Task'}
+										color={'green'}
+										renderItem={renderItem}
+										onTaskClick={() => onTaskClick(card, undefined)}
+									/>
 								</SortableContext>
 							</DroppableContainer>
 						)
@@ -405,7 +429,7 @@ export function MultipleContainers({
 	);
 
 	function renderSortableItemDragOverlay(id: UniqueIdentifier) {
-		let foundTask: any = null;
+		let foundTask: Task | null = null;
 		let containerId: UniqueIdentifier | null = null;
 
 		for (const card of items) {
@@ -432,7 +456,7 @@ export function MultipleContainers({
 					isDragging: true,
 					isDragOverlay: true,
 				})}
-				color={'red'}
+				color={statusColors[foundTask?.status]}
 				wrapperStyle={wrapperStyle({ index: 0 })}
 				renderItem={renderItem}
 				dragOverlay

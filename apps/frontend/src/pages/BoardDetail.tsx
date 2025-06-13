@@ -14,6 +14,7 @@ import type { Task } from '@services/taskService';
 import type { Card } from '@services/cardService';
 import type { Active, Over } from '@dnd-kit/core';
 import { CreateCardModal } from '@components/CreateCardModal';
+import { CreateTaskModal } from '@components/CreateTaskModal';
 
 export default function BoardDetail() {
 	const { id } = useParams<{ id: string }>();
@@ -21,12 +22,26 @@ export default function BoardDetail() {
 	const { getDetailBoardsStatus, getBoardDetails, boardDetail, resetStatus } = useBoard();
 	const { socket, emit, isConnected } = useSocket(token!);
 	const { getCards, cards, deleteCard, reorderCard } = useCard();
-	const { getTasks, tasksByCardId, deleteTask } = useTask();
+	const { getTasks, tasksByCardId, deleteTask, moveTasks } = useTask();
 
 	const [selectedCard, setSelectedCard] = useState<null | Card>(null);
+	const [selectedTask, setSelectedTask] = useState<null | Task>(null);
+
 	const [open, setOpen] = useState(false);
-	const handleClose = () => setOpen(false);
+	const handleClose = () =>{
+		setSelectedCard(null);
+		setOpen(false);
+	}
 	const handleOpen = () => setOpen(true);
+
+	const [openTask, setOpenTask] = useState(false);
+	const handleCloseTask = () =>{
+		setOpenTask(false);
+		setSelectedCard(null);
+		setSelectedTask(null);
+	}
+	const handleOpenTask = () => setOpenTask(true);
+
 	useEffect(() => {
 		fetchData();
 	}, []);
@@ -95,6 +110,11 @@ export default function BoardDetail() {
 			});
 		})
 	}
+	const handleAddOrTask = (card: Card, task?: Task) => {
+		handleOpenTask()
+		setSelectedCard(card)
+		setSelectedTask(task || null)
+	}
 	const handleDeleteCard = (card: Card) => {
 		if (!id) return
 		deleteCard({
@@ -129,6 +149,43 @@ export default function BoardDetail() {
 		setSelectedCard(card || null)
 		handleOpen()
 	}
+	const handleReorderTask = ({ sourceId, targetId,sourceGroup, targetGroup }: {
+		sourceId: string,
+		targetId: string,
+		sourceGroup: string,
+		targetGroup: string,
+	}) => {
+		if(!id) return;
+
+		moveTasks({
+			boardId: id,
+			cardId: sourceGroup,
+			data: {
+				sourceId: sourceId,
+				targetId: targetId || '-1',
+				targetGroup: targetGroup,
+			},
+		})
+			.unwrap()
+			.then(() => {
+				emit('board-updated', {
+					boardId: id,
+					update: {
+						type: 'reorder-task',
+						data: {
+							boardId: id,
+							cardId: sourceGroup,
+							data: {
+								sourceId: sourceId,
+								targetId: targetId || '-1',
+								targetGroup: targetGroup,
+							},
+						},
+					},
+				});
+			});
+
+	}
 	if (getDetailBoardsStatus.error) return <ErrorPage message={getDetailBoardsStatus.error} />;
 
 	return (
@@ -158,6 +215,8 @@ export default function BoardDetail() {
 						onRemoveCard={handleDeleteCard}
 						onReorderCard={handleReorderCard}
 						onCardClick={handleAddCard}
+						onReorderTask={handleReorderTask}
+						onTaskClick={handleAddOrTask}
 					/>
 				</Box>
 			</DrawerLayout>
@@ -167,6 +226,15 @@ export default function BoardDetail() {
 					boardId={id}
 					onClose={handleClose}
 					card={selectedCard}
+				/>
+			)}
+			{boardDetail && selectedCard && (
+				<CreateTaskModal
+					card={selectedCard}
+					open={openTask}
+					onClose={handleCloseTask}
+					board={boardDetail}
+					task={selectedTask}
 				/>
 			)}
 		</>

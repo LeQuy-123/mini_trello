@@ -17,6 +17,8 @@ import type { Board } from '@services/boardService';
 import type { Card } from '@services/cardService';
 import type { Task } from '@services/taskService';
 import { useTask } from '@utils/useTask';
+import { useAuth } from '@utils/useAuth';
+import { useSocket } from '@utils/useSocket';
 
 type CreateTaskForm = {
 	title: string;
@@ -29,7 +31,7 @@ type CreateTaskModalProps = {
 	onClose: () => void;
 	board: Board;
 	card: Card;
-	task?: Task;
+	task?: Task | null;
 };
 
 const schema = yup.object({
@@ -46,6 +48,8 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
 	task,
 }) => {
 	const { createTask, updateTask, createTaskStatus, updateTaskStatus } = useTask();
+	const { token } = useAuth();
+	const { emit } = useSocket(token!);
 	const {
 		control,
 		handleSubmit,
@@ -76,12 +80,22 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
 				cardId: card.id,
 				taskId: task.id,
 				data,
+			})?.unwrap()?.finally(() => {
+				emit('board-updated', {
+					boardId: board.id,
+					update: { type: 'reorder-card' },
+				});
 			});
 		} else {
 			await createTask({
 				boardId: board.id,
 				cardId: card.id,
 				data,
+			})?.unwrap()?.finally(() => {
+				emit('board-updated', {
+					boardId: board.id,
+					update: { type: 'reorder-card' },
+				});
 			});
 		}
 		reset();

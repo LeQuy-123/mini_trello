@@ -24,6 +24,7 @@ export interface SortableItemProps {
 	status: 'new' | 'wip' | 'reject' | 'complete' | '';
 	data: Task
 	onRemove?(): void;
+	onTaskClick?(): void;
 }
 
 export default function SortableItem({
@@ -38,7 +39,8 @@ export default function SortableItem({
 	wrapperStyle,
 	status,
 	data,
-	onRemove
+	onRemove,
+	onTaskClick
 }: SortableItemProps) {
 	const {
 		setNodeRef,
@@ -52,6 +54,9 @@ export default function SortableItem({
 		transition,
 	} = useSortable({
 		id,
+		data: {
+			type: 'task'
+		}
 	});
 	const mounted = useMountStatus();
 	const mountedWhileDragging = isDragging && !mounted;
@@ -82,6 +87,7 @@ export default function SortableItem({
 			listeners={listeners}
 			renderItem={renderItem}
 			onRemove={onRemove}
+			onTaskClick={onTaskClick}
 		/>
 	);
 }

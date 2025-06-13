@@ -4,6 +4,7 @@ import type { DraggableSyntheticListeners } from '@dnd-kit/core';
 import type { Transform } from '@dnd-kit/utilities';
 import CloseIcon from '@mui/icons-material/Close';
 import type { Task } from '@services/taskService';
+import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 
 export interface Props {
 	dragOverlay?: boolean;
@@ -36,7 +37,8 @@ export interface Props {
 		transition: Props['transition'];
 		value: Props['value'];
 	}): React.ReactElement;
-	data?: Task
+	data?: Task;
+	onTaskClick?(): void;
 }
 
 export const Item = React.memo(
@@ -60,6 +62,7 @@ export const Item = React.memo(
 				value,
 				wrapperStyle,
 				data,
+				onTaskClick,
 				...props
 			},
 			ref
@@ -111,7 +114,7 @@ export const Item = React.memo(
 				'&:hover .remove-btn': {
 					visibility: 'visible',
 				},
-				'&::before': color
+				'&::before': data ? color
 					? {
 						content: '""',
 						position: 'absolute',
@@ -124,7 +127,7 @@ export const Item = React.memo(
 						borderTopLeftRadius: '3px',
 						borderBottomLeftRadius: '3px',
 					}
-					: undefined,
+					: undefined : undefined,
 			} as React.CSSProperties;
 
 			const actionsSx = {
@@ -155,37 +158,43 @@ export const Item = React.memo(
 					<Box
 						sx={{
 							...itemSx,
-							backgroundColor: theme => disabled ? theme.palette.action.disabled : theme.palette.background.paper,
+							backgroundColor: theme => data ?  disabled ? theme.palette.action.disabled : theme.palette.background.paper : undefined,
 						}}
 						style={style}
 						tabIndex={!handle ? 0 : undefined}
 						data-cypress="draggable-item"
 					>
-							<Box sx={{ flexGrow: 1, overflow: 'hidden', pr: 1}} {...(!handle ? listeners : undefined)}>
-								<Typography
-									variant="subtitle2"
-									sx={{
-										display: '-webkit-box',
-										WebkitLineClamp: 2,
-										WebkitBoxOrient: 'vertical',
-										overflow: 'hidden',
-										textOverflow: 'ellipsis',
-										wordBreak: 'break-word',
-									}}
-								>
-									{data?.title}
-								</Typography>
-								<Typography
-									variant="caption"
-									sx={{
-										display: 'block',
-										mt: 0.5,
-										whiteSpace: 'pre-wrap', // preserve line breaks
-										wordBreak: 'break-word',
-									}}
-								>
-									{data?.description}
-								</Typography>
+							<Box sx={{ flexGrow: 1, overflow: 'hidden' }} >
+								<Box sx={{display: 'flex', alignItems: 'center'}}>
+									{data && <div  {...(!handle ? listeners : undefined)} >
+										<IconButton sx={{ cursor: 'grab', }}>
+											<DragIndicatorIcon sx={{ fontSize: '12px' }} />
+										</IconButton>
+									</div> }
+
+									<Typography
+										variant="subtitle2"
+										sx={{
+											display: '-webkit-box',
+											WebkitLineClamp: 2,
+											WebkitBoxOrient: 'vertical',
+											overflow: 'hidden',
+											textOverflow: 'ellipsis',
+											wordBreak: 'break-word',
+											'&:hover': {
+												textDecorationLine: 'underline',
+												cursor: 'default'
+											},
+											width: '100%',
+											textAlign: data ? 'start' :'center',
+											pr: 2
+										}}
+										onClick={onTaskClick}
+									>
+										{data?.title || value}
+									</Typography>
+								</Box>
+
 							</Box>
 						<Box sx={actionsSx}>
 							{onRemove && (
