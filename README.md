@@ -51,6 +51,9 @@ yarn dev
 # Start backend
 cd ../backend
 yarn dev
+
+# Or start both, using concurrently
+yarn dev
 ```
 
 ---
