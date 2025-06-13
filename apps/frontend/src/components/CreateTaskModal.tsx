@@ -11,6 +11,7 @@ import {
 	FormControl,
 	InputLabel,
 	FormHelperText,
+	TextField,
 } from '@mui/material';
 import { Controller, useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
@@ -154,6 +155,29 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
 							multiline
 							rows={4}
 							sx={{ height: 120 }}
+						/>
+						<Controller
+							name="status"
+							control={control}
+							defaultValue="new"
+							render={({ field }) => (
+								<TextField
+									value={field.value}
+									onChange={field.onChange}
+									onBlur={field.onBlur}
+									inputRef={field.ref}
+									select
+									sx={{ mt: 4, width: '100%' }}
+									label="Status"
+									error={!!errors.status}
+									helperText={errors.status?.message}
+								>
+									<MenuItem value="new">New</MenuItem>
+									<MenuItem value="wip">WIP</MenuItem>
+									<MenuItem value="reject">Reject</MenuItem>
+									<MenuItem value="complete">Complete</MenuItem>
+								</TextField>
+							)}
 						/>
 						<Controller
 							name="assignedUserIds"
