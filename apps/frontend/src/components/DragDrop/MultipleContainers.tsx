@@ -19,6 +19,8 @@ import {
 	MeasuringStrategy,
 	type KeyboardCoordinateGetter,
 	defaultDropAnimationSideEffects,
+	type Over,
+	type Active,
 } from '@dnd-kit/core';
 import {
 	SortableContext,
@@ -35,6 +37,8 @@ import DroppableContainer from '@components/DragDrop/components/DroppableContain
 import SortableItem from '@components/DragDrop/components/SortableItem';
 import type { Card } from '@services/cardService';
 import type { Task } from '@services/taskService';
+import type { SxProps } from '@mui/material';
+import type { Theme } from '@mui/system';
 
 export default {
 	title: 'Presets/Sortable/Multiple Containers',
@@ -57,8 +61,7 @@ const dropAnimation: DropAnimation = {
 
 interface Props {
 	adjustScale?: boolean;
-	columns?: number;
-	containerStyle?: React.CSSProperties;
+	containerStyle?: SxProps<Theme>;
 	coordinateGetter?: KeyboardCoordinateGetter;
 	getItemStyles?(args: {
 		value: UniqueIdentifier;
@@ -79,11 +82,13 @@ interface Props {
 	trashable?: boolean;
 	scrollable?: boolean;
 	vertical?: boolean;
+	onRemoveTask: (task: Task) => void;
+	onRemoveCard: (card: Card) => void;
+	onReorderCard: (data: { active: Active, over: Over | null }) => void;
 }
 
 export function MultipleContainers({
 	adjustScale = false,
-	columns,
 	handle = false,
 	items: initialItems,
 	containerStyle,
@@ -96,13 +101,18 @@ export function MultipleContainers({
 	strategy = verticalListSortingStrategy,
 	vertical = false,
 	scrollable,
+	onRemoveTask,
+	onRemoveCard,
+	onReorderCard,
 }: Props) {
+
 	// Hooks & State
 	const [items, setItems] = useState<BoardWithTasks>(initialItems);
 	const [activeId, setActiveId] = useState<UniqueIdentifier | null>(null);
 	const [clonedItems, setClonedItems] = useState<BoardWithTasks | null>(null);
 
 	const lastOverId = useRef<UniqueIdentifier | null>(null);
+
 	const recentlyMoved = useRef(false);
 
 	const isSortingCard = Boolean(activeId && items.some((item) => item.id === activeId));
@@ -186,9 +196,6 @@ export function MultipleContainers({
 		return items.find(card => card.tasks?.some(task => task.id === taskId));
 	}
 
-
-
-
 	return (
 		<DndContext
 			sensors={sensors}
@@ -256,13 +263,15 @@ export function MultipleContainers({
 				}
 			}}
 			onDragEnd={({ active, over }) => {
+				console.log("🚀 ~ active:", active)
 				if (!over || !active) return;
+
 				if (isSortingCard) {
-					// Finalize card reorder
 					if (active.id === over.id) return;
 
 					const activeIndex = items.findIndex(c => c.id === active.id);
 					const overIndex = items.findIndex(c => c.id === over.id);
+
 					if (activeIndex === -1 || overIndex === -1) return;
 
 					const updatedItems = [...items];
@@ -270,6 +279,8 @@ export function MultipleContainers({
 					updatedItems.splice(overIndex, 0, moved);
 					setItems(updatedItems);
 					setActiveId(null);
+
+					onReorderCard({ active, over })
 					return;
 				} else {
 					const activeCard = findCardByTaskId(String(active.id));
@@ -284,14 +295,12 @@ export function MultipleContainers({
 					if (fromIndex === -1) return;
 
 					const [movedTask] = fromTasks.splice(fromIndex, 1);
-
 					let insertAt = overIndex >= 0 ? overIndex : toTasks.length;
 
 					// Moving within same card and downward
 					if (activeCard.id === overCard.id && insertAt > fromIndex) {
 						insertAt -= 0;
 					}
-
 					if (activeCard.id === overCard.id) {
 						fromTasks.splice(insertAt, 0, movedTask);
 						setItems(items.map(card =>
@@ -305,12 +314,9 @@ export function MultipleContainers({
 							return card;
 						}));
 					}
-
 					setActiveId(null);
 				}
-
 			}}
-
 
 			onDragCancel={() => {
 				if (clonedItems) setItems(clonedItems);
@@ -341,7 +347,6 @@ export function MultipleContainers({
 								data={card}
 								key={card.id}
 								id={card.id}
-								columns={columns}
 								items={tasks ? tasks?.map((task) => task.id) : []}
 								scrollable={scrollable}
 								style={containerStyle}
@@ -363,6 +368,7 @@ export function MultipleContainers({
 											containerId={card.id}
 											getIndex={getTaskIndex}
 											status={task.status}
+											onRemove={() => onRemoveTask(task)}
 										/>
 									))}
 								</SortableContext>
@@ -431,9 +437,8 @@ export function MultipleContainers({
 		return (
 			<Container
 				label={`Column ${card.name || containerId}`}
-				columns={columns}
-				// sx={{ height: '100%' }}
 				shadow
+				data={card}
 				unstyled={false}
 			>
 				{card.tasks.map((item, index) => (
@@ -461,9 +466,13 @@ export function MultipleContainers({
 	}
 
 	function handleRemove(containerId: UniqueIdentifier) {
-		setItems(prev => prev.filter(card => card.id !== containerId));
+		setItems(prev => {
+			return prev.filter(card => card.id !== containerId)
+		});
+		const deletedCard = items?.find((card) => card.id === containerId)
+		if (!deletedCard) return;
+		onRemoveCard(deletedCard)
 	}
-
 
 }
 

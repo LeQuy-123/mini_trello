@@ -6,6 +6,7 @@ import {
 	Typography,
 	useTheme,
 	IconButton,
+	type SxProps,
 } from '@mui/material';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import CloseIcon from '@mui/icons-material/Close';
@@ -16,7 +17,7 @@ export interface Props {
 	data?: Card;
 	columns?: number;
 	label?: string;
-	style?: React.CSSProperties;
+	style?: SxProps;
 	horizontal?: boolean;
 	handleProps?: React.HTMLAttributes<any>;
 	hover?: boolean;

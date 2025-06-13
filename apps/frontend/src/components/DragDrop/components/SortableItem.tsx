@@ -23,6 +23,7 @@ export interface SortableItemProps {
 	wrapperStyle({ index }: { index: number }): React.CSSProperties;
 	status: 'new' | 'wip' | 'reject' | 'complete' | '';
 	data: Task
+	onRemove?(): void;
 }
 
 export default function SortableItem({
@@ -36,7 +37,8 @@ export default function SortableItem({
 	getIndex,
 	wrapperStyle,
 	status,
-	data
+	data,
+	onRemove
 }: SortableItemProps) {
 	const {
 		setNodeRef,
@@ -79,6 +81,7 @@ export default function SortableItem({
 			fadeIn={mountedWhileDragging}
 			listeners={listeners}
 			renderItem={renderItem}
+			onRemove={onRemove}
 		/>
 	);
 }

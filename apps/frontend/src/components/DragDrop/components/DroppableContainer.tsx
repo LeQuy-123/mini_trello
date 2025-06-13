@@ -1,4 +1,3 @@
-import React, {  } from 'react';
 import {
 	type UniqueIdentifier,
 } from '@dnd-kit/core';
@@ -11,6 +10,7 @@ import { CSS } from '@dnd-kit/utilities';
 
 import { Container, type Props as ContainerProps } from './Container';
 import type { Card } from '@services/cardService';
+import type { SxProps } from '@mui/material';
 
 
 
@@ -29,7 +29,7 @@ export default function DroppableContainer({
 	disabled?: boolean;
 	id: UniqueIdentifier;
 	items: UniqueIdentifier[];
-	style?: React.CSSProperties;
+	style?: SxProps<any> ;
 	data: Card
 }) {
 	const { active, attributes, isDragging, listeners, over, setNodeRef, transition, transform } =

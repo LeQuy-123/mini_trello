@@ -2,7 +2,6 @@ import React, { useEffect } from 'react';
 import { Box, ListItem, IconButton, Typography } from '@mui/material';
 import type { DraggableSyntheticListeners } from '@dnd-kit/core';
 import type { Transform } from '@dnd-kit/utilities';
-import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import CloseIcon from '@mui/icons-material/Close';
 import type { Task } from '@services/taskService';
 
@@ -92,9 +91,8 @@ export const Item = React.memo(
 				display: 'flex',
 				flexGrow: 1,
 				alignItems: 'center',
-				padding: '18px 20px',
-				backgroundColor: disabled ? '#f1f1f1' : '#fff',
-				color: disabled ? '#999' : '#333',
+				padding: '12px 16px',
+
 				fontWeight: 400,
 				fontSize: '1rem',
 				whiteSpace: 'nowrap',
@@ -155,13 +153,15 @@ export const Item = React.memo(
 			) : (
 				<ListItem ref={ref} sx={wrapperSx} disablePadding {...props}>
 					<Box
-						sx={itemSx}
+						sx={{
+							...itemSx,
+							backgroundColor: theme => disabled ? theme.palette.action.disabled : theme.palette.background.paper,
+						}}
 						style={style}
 						tabIndex={!handle ? 0 : undefined}
-						{...(!handle ? listeners : undefined)}
 						data-cypress="draggable-item"
 					>
-							<Box sx={{ flexGrow: 1, overflow: 'hidden', pr: 1 }}>
+							<Box sx={{ flexGrow: 1, overflow: 'hidden', pr: 1}} {...(!handle ? listeners : undefined)}>
 								<Typography
 									variant="subtitle2"
 									sx={{
@@ -193,14 +193,14 @@ export const Item = React.memo(
 									className="remove-btn"
 									sx={{ visibility: 'hidden' }}
 									size="small"
-									onClick={onRemove}
+									onClick={(e) => {
+										e.stopPropagation()
+										onRemove()
+									}}
 								>
 									<CloseIcon />
 								</IconButton>
 							)}
-							<IconButton size='small'>
-								<DragIndicatorIcon />
-							</IconButton>
 						</Box>
 					</Box>
 				</ListItem>

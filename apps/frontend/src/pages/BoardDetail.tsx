@@ -10,14 +10,17 @@ import { useCard } from '@utils/useCard';
 import { useTask } from '@utils/useTask';
 import { rectSortingStrategy } from '@dnd-kit/sortable';
 import { MultipleContainers } from '@components/DragDrop/MultipleContainers';
+import type { Task } from '@services/taskService';
+import type { Card } from '@services/cardService';
+import type { Active, Over } from '@dnd-kit/core';
 
 export default function BoardDetail() {
 	const { id } = useParams<{ id: string }>();
 	const { token } = useAuth();
 	const { getDetailBoardsStatus, getBoardDetails, boardDetail, resetStatus } = useBoard();
 	const { socket, emit, isConnected } = useSocket(token!);
-	const { getCards, cards } = useCard();
-	const { getTasks, tasksByCardId } = useTask();
+	const { getCards, cards, deleteCard, reorderCard } = useCard();
+	const { getTasks, tasksByCardId, deleteTask } = useTask();
 
 	useEffect(() => {
 		fetchData();
@@ -74,6 +77,49 @@ export default function BoardDetail() {
 		};
 	}, [isConnected, emit, socket, id]);
 
+	const handleDeleteTask = (task: Task) => {
+		if (!id) return
+		deleteTask({
+			boardId: id,
+			taskId: task.id,
+			cardId: task.cardId
+		})?.unwrap()?.then(() => {
+			emit('board-updated', {
+				boardId: id,
+				update: { type: 'reorder-card' },
+			});
+		})
+	}
+	const handleDeleteCard = (card: Card) => {
+		if (!id) return
+		deleteCard({
+			boardId: id,
+			cardId: card.id
+		})?.unwrap()?.then(() => {
+			emit('board-updated', {
+				boardId: id,
+				update: { type: 'reorder-card' },
+			});
+		})
+	}
+	const handleReorderCard = ({ active , over}:{ active: Active , over: Over | null}) => {
+		if (!id) return
+		if (!over?.id) return
+		reorderCard({
+			boardId: id,
+			data: {
+				sourceId: String(active.id),
+				targetId: String(over?.id),
+			},
+		})
+			.unwrap()
+			.then(() => {
+				emit('board-updated', {
+					boardId: id,
+					update: { type: 'reorder-card' },
+				});
+			});
+	}
 	if (getDetailBoardsStatus.error) return <ErrorPage message={getDetailBoardsStatus.error} />;
 
 	return (
@@ -92,9 +138,16 @@ export default function BoardDetail() {
 						...card,
 						tasks: tasksByCardId[card.id]
 					}))}
+					containerStyle={{
+						backgroundColor: theme => {
+							return theme.palette.action.focus
+						}
+					}}
 					strategy={rectSortingStrategy}
+					onRemoveTask={handleDeleteTask}
+					onRemoveCard={handleDeleteCard}
+					onReorderCard={handleReorderCard}
 				/>
-
 			</Box>
 		</DrawerLayout>
 	);
