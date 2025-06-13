@@ -15,7 +15,7 @@ A minimalist Trello-like Kanban board built with a full-stack architecture, feat
 - Styling: Emotion, MUI (Material-UI)
 - State Management: Redux Toolkit
 - Form Handling: React Hook Form + Yup
-- Drag and Drop: DnD Kit
+- Drag and Drop: DnD Kit [Source example](https://codesandbox.io/p/sandbox/react-dndkit-multiple-containers-6wydy9)
 - Socket Communication: Socket.IO
 - Routing: React Router
 
