@@ -7,7 +7,7 @@ import { useParams } from 'react-router-dom';
 import { useBoard } from '@utils/useBoard';
 import ErrorPage from '@components/ErrorPage';
 import DrawerLayout from '@components/DrawerLayout';
-import CardList from '@components/CardList';
+import CardList from '@components/DragDropSet/CardList';
 import { useSocket } from '@utils/useSocket';
 import { useAuth } from '@utils/useAuth';
 import { useCard } from '@utils/useCard';

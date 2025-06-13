@@ -7,7 +7,7 @@ import {
 	Typography,
 } from '@mui/material';
 import type { Board } from '@services/boardService';
-import { CreateCardModal } from './CreateCardModal';
+import { CreateCardModal } from '../CreateCardModal';
 import { useEffect, useState } from 'react';
 import type { Card as CardType } from '@services/cardService';
 import { useCard } from '@utils/useCard';

@@ -13,9 +13,9 @@ import MoreVertIcon from '@mui/icons-material/MoreVert';
 import type { Card as CardType } from '@services/cardService';
 import React, { useState, useCallback } from 'react';
 import { useTask } from '@utils/useTask';
-import { CreateTaskModal } from './CreateTaskModal';
+import { CreateTaskModal } from '../CreateTaskModal';
 import type { Board } from '@services/boardService'
-import TaskItem from './TaskItem';
+import TaskItem from './TaskComponent';
 import type { Task } from '@services/taskService';
 import { useSortable } from '@dnd-kit/react/sortable';
 import { useDroppable } from '@dnd-kit/react';
