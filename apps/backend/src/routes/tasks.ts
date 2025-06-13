@@ -54,6 +54,7 @@ router.get('/', authenticate, checkBoardAccess, async (req: Request, res: Respon
 			description: data.description,
 			status: data.status,
 			cardIndex: data.cardIndex,
+			assignedUserIds: data.assignedUserIds,
 		};
 	});
 
