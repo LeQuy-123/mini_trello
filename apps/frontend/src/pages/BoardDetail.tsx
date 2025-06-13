@@ -22,7 +22,7 @@ export default function BoardDetail() {
 	const { getDetailBoardsStatus, getBoardDetails, boardDetail, resetStatus } = useBoard();
 	const { socket, emit, isConnected } = useSocket(token!);
 	const { getCards, cards, deleteCard, reorderCard } = useCard();
-	const { getTasks, tasksByCardId, deleteTask, moveTasks } = useTask();
+	const { getTasks, tasksByCardId, deleteTask, moveTasks, reorderTasks } = useTask();
 
 	const [selectedCard, setSelectedCard] = useState<null | Card>(null);
 	const [selectedTask, setSelectedTask] = useState<null | Task>(null);
@@ -156,34 +156,62 @@ export default function BoardDetail() {
 		targetGroup: string,
 	}) => {
 		if(!id) return;
-
-		moveTasks({
-			boardId: id,
-			cardId: sourceGroup,
-			data: {
-				sourceId: sourceId,
-				targetId: targetId || '-1',
-				targetGroup: targetGroup,
-			},
-		})
-			.unwrap()
-			.then(() => {
-				emit('board-updated', {
-					boardId: id,
-					update: {
-						type: 'reorder-task',
-						data: {
-							boardId: id,
-							cardId: sourceGroup,
+		if(sourceGroup === targetGroup) {
+			reorderTasks({
+				boardId: id,
+				cardId: sourceGroup,
+				data: {
+					sourceId: sourceId,
+					targetId: targetId || '-1',
+				},
+			})
+				.unwrap()
+				.then(() => {
+					emit('board-updated', {
+						boardId: id,
+						update: {
+							type: 'reorder-task',
 							data: {
-								sourceId: sourceId,
-								targetId: targetId || '-1',
-								targetGroup: targetGroup,
+								boardId: id,
+								cardId: sourceGroup,
+								data: {
+									sourceId: sourceId,
+									targetId: targetId || '-1',
+								},
 							},
 						},
-					},
+					});
 				});
-			});
+		} else {
+			moveTasks({
+				boardId: id,
+				cardId: sourceGroup,
+				data: {
+					sourceId: sourceId,
+					targetId: targetId || '-1',
+					targetGroup: targetGroup,
+				},
+			})
+				.unwrap()
+				.then(() => {
+					emit('board-updated', {
+						boardId: id,
+						update: {
+							type: 'reorder-task',
+							data: {
+								boardId: id,
+								cardId: sourceGroup,
+								data: {
+									sourceId: sourceId,
+									targetId: targetId || '-1',
+									targetGroup: targetGroup,
+								},
+							},
+						},
+					});
+				});
+		}
+
 
 	}
 	if (getDetailBoardsStatus.error) return <ErrorPage message={getDetailBoardsStatus.error} />;

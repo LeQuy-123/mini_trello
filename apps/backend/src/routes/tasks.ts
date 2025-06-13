@@ -99,7 +99,7 @@ router.get('/', authenticate, checkBoardAccess, async (req: Request, res: Respon
  */
 router.post('/', authenticate, checkBoardAccess, async (req: Request, res: Response) => {
 	const { id: cardId, boardId } = req.params;
-	const { title, description, status } = req.body;
+	const { title, description, status, assignedUserIds } = req.body;
 
 	if (!title || !description || !status) {
 		res.status(400).json({ error: 'Missing fields' });
@@ -117,7 +117,7 @@ router.post('/', authenticate, checkBoardAccess, async (req: Request, res: Respo
 			description,
 			status,
 			ownerId: req.uid,
-			assignedUserIds: [],
+			assignedUserIds: assignedUserIds || [],
 			createdAt: admin.firestore.Timestamp.now(),
 			cardIndex: nextIndex,
 		});

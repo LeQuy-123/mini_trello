@@ -6,8 +6,11 @@ import {
 	Button,
 	Fade,
 	CircularProgress,
-	TextField,
 	MenuItem,
+	Select,
+	FormControl,
+	InputLabel,
+	FormHelperText,
 } from '@mui/material';
 import { Controller, useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
@@ -19,11 +22,13 @@ import type { Task } from '@services/taskService';
 import { useTask } from '@utils/useTask';
 import { useAuth } from '@utils/useAuth';
 import { useSocket } from '@utils/useSocket';
+import { useBoard } from '@utils/useBoard';
 
 type CreateTaskForm = {
 	title: string;
 	description: string;
 	status: string;
+	assignedUserIds: string[];
 };
 
 type CreateTaskModalProps = {
@@ -38,6 +43,7 @@ const schema = yup.object({
 	title: yup.string().required('Name is required'),
 	description: yup.string().required('Description is required'),
 	status: yup.string().required('Status is required'),
+	assignedUserIds: yup.array().of(yup.string().required()).required('Please assign at least one user'),
 });
 
 export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
@@ -48,6 +54,8 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
 	task,
 }) => {
 	const { createTask, updateTask, createTaskStatus, updateTaskStatus } = useTask();
+	const { users } = useBoard();
+
 	const { token } = useAuth();
 	const { emit } = useSocket(token!);
 	const {
@@ -62,6 +70,7 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
 			title: '',
 			description: '',
 			status: 'new',
+			assignedUserIds: [],
 		},
 	});
 	useEffect(() => {
@@ -69,6 +78,7 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
 			setValue('title', task.title);
 			setValue('description', task.description);
 			setValue('status', task.status);
+			setValue('assignedUserIds', task.assignedUserIds || []);
 		} else {
 			reset();
 		}
@@ -146,28 +156,39 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
 							sx={{ height: 120 }}
 						/>
 						<Controller
-							name="status"
+							name="assignedUserIds"
 							control={control}
-							defaultValue="new"
 							render={({ field }) => (
-								<TextField
-									value={field.value}
-									onChange={field.onChange}
-									onBlur={field.onBlur}
-									inputRef={field.ref}
-									select
-									sx={{ mt: 4, width: '100%' }}
-									label="Status"
-									error={!!errors.status}
-									helperText={errors.status?.message}
-								>
-									<MenuItem value="new">New</MenuItem>
-									<MenuItem value="wip">WIP</MenuItem>
-									<MenuItem value="reject">Reject</MenuItem>
-									<MenuItem value="complete">Complete</MenuItem>
-								</TextField>
+								<FormControl fullWidth sx={{ mt: 4 }} error={!!errors.assignedUserIds}>
+									<InputLabel id="assigned-users-label">Assign to Users</InputLabel>
+									<Select
+										labelId="assigned-users-label"
+										multiple
+										value={field.value}
+										onChange={field.onChange}
+										onBlur={field.onBlur}
+										inputRef={field.ref}
+										label="Assign to Users"
+										renderValue={(selected) =>
+											users
+												.filter((user) => selected.includes(user.id))
+												.map((user) => user.name || user.email)
+												.join(', ')
+										}
+									>
+										{users.map((user) => (
+											<MenuItem key={user.id} value={user.id}>
+												{user.name || user.email}
+											</MenuItem>
+										))}
+									</Select>
+									{errors.assignedUserIds && (
+										<FormHelperText>{errors.assignedUserIds.message}</FormHelperText>
+									)}
+								</FormControl>
 							)}
 						/>
+
 
 						<Box mt={4} display="flex" justifyContent="flex-end" gap={2}>
 							<Button
