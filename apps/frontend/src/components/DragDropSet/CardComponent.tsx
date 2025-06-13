@@ -14,7 +14,7 @@ import type { Card as CardType } from '@services/cardService';
 import React, { useState, useCallback } from 'react';
 import { useTask } from '@utils/useTask';
 import { CreateTaskModal } from '../CreateTaskModal';
-import type { Board } from '@services/boardService'
+import type { Board } from '@services/boardService';
 import TaskItem from './TaskComponent';
 import type { Task } from '@services/taskService';
 import { useSortable } from '@dnd-kit/react/sortable';
@@ -28,15 +28,19 @@ type Props = {
 	onClickDelete: () => void;
 };
 
-
-const CardComponent = React.memo(function CardComponent({ card, board, onClickEdit, onClickDelete, cardIndex }: Props) {
+const CardComponent = React.memo(function CardComponent({
+	card,
+	board,
+	onClickEdit,
+	onClickDelete,
+	cardIndex,
+}: Props) {
 	const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 	const [openModal, setOpenModal] = useState(false);
 	const [currentTask, setCurrentTask] = useState<Task | undefined>(undefined);
 
 	const { tasksByCardId, deleteTask } = useTask();
 	const tasks = tasksByCardId[card.id] || [];
-
 
 	const handleMenuOpen = useCallback((event: React.MouseEvent<HTMLElement>) => {
 		setAnchorEl(event.currentTarget);
@@ -55,27 +59,30 @@ const CardComponent = React.memo(function CardComponent({ card, board, onClickEd
 		setOpenModal(true);
 	}, []);
 
-	const handleDeleteTask = useCallback((taskId: string) => {
-		deleteTask({ boardId: board.id, cardId: card.id, taskId });
-	}, [board.id, card.id, deleteTask]);
+	const handleDeleteTask = useCallback(
+		(taskId: string) => {
+			deleteTask({ boardId: board.id, cardId: card.id, taskId });
+		},
+		[board.id, card.id, deleteTask]
+	);
 
-	const handleEditTask = useCallback((task: Task) => {
-		setCurrentTask(task);
-		handleOpenModal();
-	}, [handleOpenModal]);
+	const handleEditTask = useCallback(
+		(task: Task) => {
+			setCurrentTask(task);
+			handleOpenModal();
+		},
+		[handleOpenModal]
+	);
 
-	const {
-		ref: dragRef,
-		isDragging,
-	} = useSortable({
+	const { ref: dragRef, isDragging } = useSortable({
 		id: card.id,
 		index: cardIndex,
 		type: 'card',
 		collisionPriority: 1,
 		accept: ['card'],
 		data: {
-			name: card.name
-		}
+			name: card.name,
+		},
 	});
 
 	return (
@@ -94,10 +101,7 @@ const CardComponent = React.memo(function CardComponent({ card, board, onClickEd
 			>
 				<CardContent>
 					<Stack direction="row" alignItems="center" justifyContent="space-between">
-						<Box
-
-							sx={{ width: '100%', userSelect: 'none', cursor: 'grab' }}
-						>
+						<Box sx={{ width: '100%', userSelect: 'none', cursor: 'grab' }}>
 							<Typography variant="subtitle1">{card.name}</Typography>
 							{card.description && (
 								<Typography
@@ -169,12 +173,12 @@ const CardComponent = React.memo(function CardComponent({ card, board, onClickEd
 export default CardComponent;
 
 type ListTaskProps = {
-	tasks: Task[]
-	card: CardType
+	tasks: Task[];
+	card: CardType;
 	onClickEdit: (task: Task) => void;
 	onClickDelete: (taskId: string) => void;
-}
-const ListTask = ({ tasks, card,  onClickEdit, onClickDelete }: ListTaskProps) => {
+};
+const ListTask = ({ tasks, card, onClickEdit, onClickDelete }: ListTaskProps) => {
 	const { isDropTarget, ref } = useDroppable({
 		id: `drop-${card.id}`,
 		type: 'card',
@@ -184,7 +188,8 @@ const ListTask = ({ tasks, card,  onClickEdit, onClickDelete }: ListTaskProps) =
 	return (
 		<Stack
 			sx={{
-				backgroundColor: (theme) => isDropTarget ? theme.palette.action.selected : theme.palette.background.paper,
+				backgroundColor: (theme) =>
+					isDropTarget ? theme.palette.action.selected : theme.palette.background.paper,
 				p: 1,
 				minHeight: 60,
 				borderRadius: 1,
@@ -203,13 +208,8 @@ const ListTask = ({ tasks, card,  onClickEdit, onClickDelete }: ListTaskProps) =
 						onEdit={onClickEdit}
 						onDelete={onClickDelete}
 					/>
-				)
+				);
 			})}
-
 		</Stack>
 	);
-}
-
-
-
-
+};

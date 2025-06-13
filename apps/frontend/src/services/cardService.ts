@@ -16,7 +16,6 @@ export interface Card {
 	boardIndex?: number;
 }
 
-
 class CardService {
 	static async getCards(boardId: string): Promise<Card[]> {
 		const res = await apiClient.get<Card[]>(`/boards/${boardId}/cards`);

@@ -1,11 +1,4 @@
-import {
-	Card,
-	CardActionArea,
-	CardContent,
-	Skeleton,
-	Stack,
-	Typography,
-} from '@mui/material';
+import { Card, CardActionArea, CardContent, Skeleton, Stack, Typography } from '@mui/material';
 import type { Board } from '@services/boardService';
 import { CreateCardModal } from '../CreateCardModal';
 import { useEffect, useState } from 'react';
@@ -17,54 +10,42 @@ import { useTask } from '@utils/useTask';
 import { DragDropProvider } from '@dnd-kit/react';
 import { useAuth } from '@utils/useAuth';
 type Props = {
-	board: Board
-}
-export default function CardList({
-	board
-}: Props) {
-	const { token } = useAuth()
-	const {
-		cards,
-		getCards,
-		getCardsStatus,
-		deleteCard,
-		reorderCard,
-
-	} = useCard()
-	const {  getTasks, reorderTasks, tasksByCardId, moveTasks } = useTask()
+	board: Board;
+};
+export default function CardList({ board }: Props) {
+	const { token } = useAuth();
+	const { cards, getCards, getCardsStatus, deleteCard, reorderCard } = useCard();
+	const { getTasks, reorderTasks, tasksByCardId, moveTasks } = useTask();
 	const { emit } = useSocket(token!);
 
 	useEffect(() => {
-		fetchData()
-	}, [])
+		fetchData();
+	}, []);
 	const fetchData = async () => {
 		try {
 			const cards = await getCards({ boardId: board.id }).unwrap();
 			await Promise.all(
-				cards.map((card) =>
-					getTasks({ boardId: board.id, cardId: card.id })
-				)
+				cards.map((card) => getTasks({ boardId: board.id, cardId: card.id }))
 			);
 		} catch (error) {
-			console.log("🚀 ~ fetchData ~ error:", error)
+			console.log('🚀 ~ fetchData ~ error:', error);
 		}
-	}
+	};
 	const [selectedCard, setSelectedCard] = useState<null | CardType>(null);
-
 
 	const [open, setOpen] = useState(false);
 	const handleClose = () => setOpen(false);
 	const handleOpen = () => setOpen(true);
 	const handleEdit = (card: CardType) => {
-		setSelectedCard(card)
-		handleOpen()
-	}
+		setSelectedCard(card);
+		handleOpen();
+	};
 	const handleDelete = (card: CardType) => {
 		deleteCard({
 			boardId: board.id,
-			cardId: card.id
-		})
-	}
+			cardId: card.id,
+		});
+	};
 	const renderCardSkeletons = () => {
 		const count = board.cardsCount || 3;
 		return Array.from({ length: count }).map((_, idx) => (
@@ -76,70 +57,78 @@ export default function CardList({
 		));
 	};
 
-
-
 	const handleDragEnd = (event: any) => {
 		const { source, target } = event.operation;
 
-		if(!target) return;
+		if (!target) return;
 		if (event.canceled) {
 			return;
 		}
-		if (source.type === 'card') { //move card
+		if (source.type === 'card') {
+			//move card
 			const sourceIndex = source.sortable.initialIndex;
-			const targetIndex = source.sortable.index
-			if(sourceIndex === targetIndex) return;
-			if (!cards[sourceIndex]?.id || !cards[targetIndex]?.id) return
+			const targetIndex = source.sortable.index;
+			if (sourceIndex === targetIndex) return;
+			if (!cards[sourceIndex]?.id || !cards[targetIndex]?.id) return;
 			reorderCard({
 				boardId: board.id,
 				data: {
 					sourceId: String(cards[sourceIndex].id),
-					targetId: String(cards[targetIndex].id)
-				}
-			}).unwrap().then(() => {
-				emit('board-updated', {
-					boardId: board.id,
-					update: { type: 'reorder-card' }
+					targetId: String(cards[targetIndex].id),
+				},
+			})
+				.unwrap()
+				.then(() => {
+					emit('board-updated', {
+						boardId: board.id,
+						update: { type: 'reorder-card' },
+					});
 				});
-			});
 		}
 
-		if (source.type === 'item') { //move task
+		if (source.type === 'item') {
+			//move task
 			const sourceIndex = source.sortable.initialIndex;
 			const targetIndex = source.sortable.index;
 
 			const sourceGroup = source.sortable.initialGroup;
 			const targetGroup = source.sortable.group;
 
-			if (sourceGroup === targetGroup) { // move task inside 1 group
+			if (sourceGroup === targetGroup) {
+				// move task inside 1 group
 				if (sourceIndex === targetIndex) return;
-				const tasks = tasksByCardId?.[source.sortable.group]
-				if (!tasks[sourceIndex]?.id || !tasks[targetIndex]?.id) return
+				const tasks = tasksByCardId?.[source.sortable.group];
+				if (!tasks[sourceIndex]?.id || !tasks[targetIndex]?.id) return;
 				reorderTasks({
 					boardId: board.id,
 					cardId: source.sortable.group,
 					data: {
 						sourceId: String(tasks[sourceIndex].id),
-						targetId: String(tasks[targetIndex].id)
-					}
-				}).unwrap().then(() => {
-					emit('board-updated', {
-						boardId: board.id,
-						update: {
-							type: 'reorder-task', data: {
-								boardId: board.id,
-								cardId: source.sortable.group,
+						targetId: String(tasks[targetIndex].id),
+					},
+				})
+					.unwrap()
+					.then(() => {
+						emit('board-updated', {
+							boardId: board.id,
+							update: {
+								type: 'reorder-task',
 								data: {
-									sourceId: String(tasks[sourceIndex].id),
-									targetId: String(tasks[targetIndex].id)
-								}
-						}}
+									boardId: board.id,
+									cardId: source.sortable.group,
+									data: {
+										sourceId: String(tasks[sourceIndex].id),
+										targetId: String(tasks[targetIndex].id),
+									},
+								},
+							},
+						});
 					});
-				});
-			} else {// move task to diffrent 1 group
-				const tasksOriginal = tasksByCardId?.[sourceGroup]
-				const tasksNew = tasksByCardId?.[targetGroup]
-				if (!tasksOriginal[sourceIndex]?.id || !tasksNew[targetIndex]?.id) return
+			} else {
+				// move task to diffrent 1 group
+				const tasksOriginal = tasksByCardId?.[sourceGroup];
+				const tasksNew = tasksByCardId?.[targetGroup];
+				if (!tasksOriginal[sourceIndex]?.id || !tasksNew[targetIndex]?.id) return;
 
 				moveTasks({
 					boardId: board.id,
@@ -147,29 +136,32 @@ export default function CardList({
 					data: {
 						sourceId: String(tasksOriginal[sourceIndex].id),
 						targetId: String(tasksNew[targetIndex].id),
-						targetGroup
-					}
-				}).unwrap().then(() => {
-					emit('board-updated', {
-						boardId: board.id,
-						update: {
-							type: 'reorder-task', data: {
-								boardId: board.id,
-								cardId: sourceGroup,
+						targetGroup,
+					},
+				})
+					.unwrap()
+					.then(() => {
+						emit('board-updated', {
+							boardId: board.id,
+							update: {
+								type: 'reorder-task',
 								data: {
-									sourceId: String(tasksOriginal[sourceIndex].id),
-									targetId: String(tasksNew[targetIndex].id),
-									targetGroup
-								}
-						} }
+									boardId: board.id,
+									cardId: sourceGroup,
+									data: {
+										sourceId: String(tasksOriginal[sourceIndex].id),
+										targetId: String(tasksNew[targetIndex].id),
+										targetGroup,
+									},
+								},
+							},
+						});
 					});
-				});
-
 			}
-
 		}
-		if (target.id?.toString()?.includes('drop-')) { //special case move item to empty card
-			const targetGroup = target.id?.toString()?.replace('drop-', '')
+		if (target.id?.toString()?.includes('drop-')) {
+			//special case move item to empty card
+			const targetGroup = target.id?.toString()?.replace('drop-', '');
 			const sourceGroup = source.sortable.initialGroup;
 			const tasksOriginal = tasksByCardId?.[sourceGroup];
 			const sourceIndex = source.sortable.initialIndex;
@@ -179,35 +171,28 @@ export default function CardList({
 				data: {
 					sourceId: String(tasksOriginal[sourceIndex].id),
 					targetId: '-1',
-					targetGroup
-				}
-			})
-
+					targetGroup,
+				},
+			});
 		}
-	}
-
-
-
-
+	};
 
 	return (
 		<>
-			<DragDropProvider
-				onDragEnd={handleDragEnd}
-			>
-				<Stack direction='row' gap={2} sx={{ mt: 2 }} alignItems={'flex-start'}>
+			<DragDropProvider onDragEnd={handleDragEnd}>
+				<Stack direction="row" gap={2} sx={{ mt: 2 }} alignItems={'flex-start'}>
 					{getCardsStatus.loading
 						? renderCardSkeletons()
 						: cards?.map((card, index) => (
-							<CardComponent
-								key={`card-${card.id}`}
-								card={card}
-								cardIndex={index}
-								board={board}
-								onClickEdit={() => handleEdit(card)}
-								onClickDelete={() => handleDelete(card)}
-							/>
-						))}
+								<CardComponent
+									key={`card-${card.id}`}
+									card={card}
+									cardIndex={index}
+									board={board}
+									onClickEdit={() => handleEdit(card)}
+									onClickDelete={() => handleDelete(card)}
+								/>
+							))}
 					<Card
 						sx={{
 							width: 300,
@@ -240,16 +225,16 @@ export default function CardList({
 						</CardActionArea>
 					</Card>
 				</Stack>
-
 			</DragDropProvider>
 
-			{board && <CreateCardModal
-				open={open}
-				boardId={board.id}
-				onClose={handleClose}
-				card={selectedCard}
-			/>}
-
+			{board && (
+				<CreateCardModal
+					open={open}
+					boardId={board.id}
+					onClose={handleClose}
+					card={selectedCard}
+				/>
+			)}
 		</>
 	);
 }

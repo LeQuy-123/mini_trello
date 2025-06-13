@@ -105,10 +105,7 @@ router.post('/', authenticate, checkBoardAccess, async (req: Request, res: Respo
 		res.status(400).json({ error: 'Missing fields' });
 		return;
 	}
-	const existingTasks = await db
-		.collection('tasks')
-		.where('cardId', '==', cardId)
-		.get();
+	const existingTasks = await db.collection('tasks').where('cardId', '==', cardId).get();
 
 	const nextIndex = existingTasks.empty ? 0 : (existingTasks.docs[0].data().cardIndex ?? 0) + 1;
 
@@ -143,7 +140,6 @@ router.post('/', authenticate, checkBoardAccess, async (req: Request, res: Respo
 		res.status(500).json({ error: 'Failed to create task', details: error });
 	}
 });
-
 
 /**
  * @swagger
@@ -232,12 +228,10 @@ router.put('/:taskId', authenticate, checkBoardAccess, async (req: Request, res:
 
 	await ref.update(updates);
 
-
 	const updatedDoc = await ref.get();
 	const updatedTask = { id: ref.id, ...updatedDoc.data() };
 
 	res.status(200).json(updatedTask);
-
 });
 
 /**
@@ -285,7 +279,6 @@ router.delete('/:taskId', authenticate, checkBoardAccess, async (req: Request, r
 		res.status(500).json({ error: 'Failed to delete task', details: error });
 	}
 });
-
 
 /**
  * @swagger
@@ -506,7 +499,6 @@ router.patch('/reorder', authenticate, checkBoardAccess, async (req: Request, re
 	}
 });
 
-
 /**
  * @swagger
  * /boards/{boardId}/cards/{id}/tasks/move:
@@ -560,10 +552,9 @@ router.patch('/move', authenticate, checkBoardAccess, async (req: Request, res: 
 	const { id: sourceCardId } = req.params;
 	const { sourceId, targetId, targetGroup } = req.body;
 
-
 	if (!sourceId || !targetId || !targetGroup) {
 		res.status(400).json({ error: 'Missing required fields' });
-		return
+		return;
 	}
 
 	try {
@@ -573,17 +564,15 @@ router.patch('/move', authenticate, checkBoardAccess, async (req: Request, res: 
 			.orderBy('cardIndex')
 			.get();
 
-
 		const sourceTasks = sourceSnapshot.docs.map((doc) => ({
 			id: doc.id,
 			...doc.data(),
 		}));
 
-
 		const sourceIndex = sourceTasks.findIndex((task) => task.id === sourceId);
 		if (sourceIndex === -1) {
 			res.status(400).json({ error: 'Source task not found in source card' });
-			return
+			return;
 		}
 		const [movedTask] = sourceTasks.splice(sourceIndex, 1);
 
@@ -636,6 +625,5 @@ router.patch('/move', authenticate, checkBoardAccess, async (req: Request, res: 
 		res.status(500).json({ error: 'Failed to move task', details: error });
 	}
 });
-
 
 export default router;

@@ -19,23 +19,13 @@ import { useAuth } from '@utils/useAuth';
 type UserInvitationModalProps = {
 	open: boolean;
 	onClose: () => void;
-
 };
 
-export const UserInvitationModal: React.FC<UserInvitationModalProps> = ({
-	open,
-	onClose,
-}) => {
-	const { user : currentUser} = useAuth()
-	const {
-		getUser,
-		users,
-		sendInvitation,
-		sendInvitationStatus,
-		invitations,
-		getInvitations
-	} = useInvitation();
-	const { users: invitedUserIds } = useBoard()
+export const UserInvitationModal: React.FC<UserInvitationModalProps> = ({ open, onClose }) => {
+	const { user: currentUser } = useAuth();
+	const { getUser, users, sendInvitation, sendInvitationStatus, invitations, getInvitations } =
+		useInvitation();
+	const { users: invitedUserIds } = useBoard();
 	const { id } = useParams<{ id: string }>();
 
 	useEffect(() => {
@@ -49,10 +39,12 @@ export const UserInvitationModal: React.FC<UserInvitationModalProps> = ({
 		if (!id) return;
 		await sendInvitation(id, {
 			memberId: userId,
-			emailMember: email
-		})?.unwrap()?.then(() => {
-			getInvitations()
-		});
+			emailMember: email,
+		})
+			?.unwrap()
+			?.then(() => {
+				getInvitations();
+			});
 	};
 
 	return (
@@ -74,17 +66,20 @@ export const UserInvitationModal: React.FC<UserInvitationModalProps> = ({
 					<Typography variant="h6" mb={2}>
 						Invite Users to Board
 					</Typography>
-					<Box sx={{
-						overflowY: 'auto',
-						maxHeight: 500,
-
-					}}>
-						<List >
+					<Box
+						sx={{
+							overflowY: 'auto',
+							maxHeight: 500,
+						}}
+					>
+						<List>
 							{users.map((user, index) => {
-								const isInvited = invitedUserIds.findIndex((iu) => iu.id === user.id) !== -1;
-								const isSendInvation = invitations?.findIndex((iv) => iv.memberId === user.id) != -1
+								const isInvited =
+									invitedUserIds.findIndex((iu) => iu.id === user.id) !== -1;
+								const isSendInvation =
+									invitations?.findIndex((iv) => iv.memberId === user.id) != -1;
 								const isCurrentUser = currentUser?.id === user.id;
-								if(isCurrentUser) return;
+								if (isCurrentUser) return;
 								return (
 									<React.Fragment key={user.id}>
 										<ListItem
@@ -96,7 +91,13 @@ export const UserInvitationModal: React.FC<UserInvitationModalProps> = ({
 											}}
 										>
 											<ListItemText
-												primary={<Typography variant={isCurrentUser ? 'h6' : 'inherit'}>{user.name}</Typography>}
+												primary={
+													<Typography
+														variant={isCurrentUser ? 'h6' : 'inherit'}
+													>
+														{user.name}
+													</Typography>
+												}
 												secondary={user.email}
 											/>
 											{!isInvited && (
@@ -104,14 +105,19 @@ export const UserInvitationModal: React.FC<UserInvitationModalProps> = ({
 													variant="outlined"
 													size="small"
 													disabled={
-														sendInvitationStatus.loading || isSendInvation
+														sendInvitationStatus.loading ||
+														isSendInvation
 													}
-													onClick={() => handleInvite(user.id, user.email)}
+													onClick={() =>
+														handleInvite(user.id, user.email)
+													}
 												>
 													{sendInvitationStatus.loading ? (
 														<CircularProgress size={20} />
+													) : isSendInvation ? (
+														'Invited'
 													) : (
-															isSendInvation ? 'Invited' : 'Invite'
+														'Invite'
 													)}
 												</Button>
 											)}
@@ -122,7 +128,6 @@ export const UserInvitationModal: React.FC<UserInvitationModalProps> = ({
 							})}
 						</List>
 					</Box>
-
 
 					<Box mt={3} display="flex" justifyContent="flex-end">
 						<Button onClick={onClose} variant="outlined">

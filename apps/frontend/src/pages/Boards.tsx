@@ -3,13 +3,12 @@ import { BoardList } from '@components/BoardList';
 import { useEffect } from 'react';
 import { useInvitation } from '@utils/useInvitation';
 
-
 export default function Boards() {
-	const {getUser, getInvitations} = useInvitation()
+	const { getUser, getInvitations } = useInvitation();
 	useEffect(() => {
-		getUser()
-		getInvitations()
-	}, [])
+		getUser();
+		getInvitations();
+	}, []);
 
 	return (
 		<Box sx={{ flexGrow: 1, p: 2 }}>

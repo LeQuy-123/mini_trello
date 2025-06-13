@@ -1,5 +1,10 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import TaskService, { type Task, type CreateTaskBody, type TaskReorderBody, type TaskMoveBody } from '@services/taskService';
+import TaskService, {
+	type Task,
+	type CreateTaskBody,
+	type TaskReorderBody,
+	type TaskMoveBody,
+} from '@services/taskService';
 import { getDefaultAsyncState, showError, showSuccess } from '@utils/helper';
 import type { AsyncStatus } from '@utils/type';
 import { decrementTaskCount, incrementTaskCount } from './cardSlice';
@@ -16,7 +21,6 @@ interface TaskState {
 	move: AsyncStatus;
 }
 
-
 const initialState: TaskState = {
 	tasksByCardId: {},
 	task: null,
@@ -28,7 +32,6 @@ const initialState: TaskState = {
 	reorder: getDefaultAsyncState(),
 	move: getDefaultAsyncState(),
 };
-
 
 export const getTasks = createAsyncThunk(
 	'tasks/get',
@@ -67,7 +70,7 @@ export const createTask = createAsyncThunk(
 			thunkAPI.dispatch(incrementTaskCount(cardId));
 			return { cardId, task };
 		} catch (error: any) {
-			console.log("🚀 ~ error:", error)
+			console.log('🚀 ~ error:', error);
 			showError(error);
 			return thunkAPI.rejectWithValue(error?.message || 'Failed to create task');
 		}
@@ -93,7 +96,7 @@ export const deleteTask = createAsyncThunk(
 			showSuccess('Task deleted successfully');
 			return { cardId, taskId };
 		} catch (error: any) {
-			showError(error)
+			showError(error);
 			return thunkAPI.rejectWithValue(error?.message || 'Failed to delete task');
 		}
 	}
@@ -131,7 +134,7 @@ export const reorderTasks = createAsyncThunk(
 		thunkAPI
 	) => {
 		try {
-			const tasks = await TaskService.reorderTask(boardId,cardId, data);
+			const tasks = await TaskService.reorderTask(boardId, cardId, data);
 			return { cardId, tasks };
 		} catch (error: any) {
 			return thunkAPI.rejectWithValue(error?.message || 'Failed to reorder task');
@@ -171,9 +174,7 @@ const taskSlice = createSlice({
 			state.getOne = getDefaultAsyncState();
 			state.move = getDefaultAsyncState();
 			state.reorder = getDefaultAsyncState();
-
 		},
-
 	},
 	extraReducers: (builder) => {
 		const handleAsync = <K extends keyof Omit<TaskState, 'tasksByCardId' | 'task'>>(

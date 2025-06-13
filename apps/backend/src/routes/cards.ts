@@ -127,7 +127,7 @@ router.post('/', authenticate, checkBoardAccess, async (req: Request, res: Respo
 		const boardDoc = await boardRef.get();
 		if (!boardDoc.exists) {
 			res.status(404).json({ error: 'Board not found' });
-			return
+			return;
 		}
 		const snapshotCard = await db.collection('cards').where('boardId', '==', boardId).get();
 		const currentIndex = snapshotCard.size || 0;
@@ -460,59 +460,52 @@ router.delete('/:id', authenticate, checkBoardAccess, async (req: Request, res: 
  *         description: Server error while reordering cards
  */
 
-router.patch(
-	'/reorder',
-	authenticate,
-	checkBoardAccess,
-	async (req: Request, res: Response) => {
-		const { boardId } = req.params;
-		const { sourceId, targetId } = req.body;
+router.patch('/reorder', authenticate, checkBoardAccess, async (req: Request, res: Response) => {
+	const { boardId } = req.params;
+	const { sourceId, targetId } = req.body;
 
+	if (!sourceId || !targetId) {
+		res.status(400).json({ error: 'Missing sourceId or targetId' });
+		return;
+	}
 
-		if (!sourceId || !targetId) {
-			res.status(400).json({ error: 'Missing sourceId or targetId' });
+	try {
+		const snapshot = await db
+			.collection('cards')
+			.where('boardId', '==', boardId)
+			.orderBy('boardIndex')
+			.get();
+
+		const cards = snapshot.docs.map((doc) => ({
+			id: doc.id,
+			...doc.data(),
+		})) as Card[];
+
+		const sourceIndex = cards.findIndex((card) => card.id === sourceId);
+		const targetIndex = cards.findIndex((card) => card.id === targetId);
+
+		if (sourceIndex === -1 || targetIndex === -1) {
+			res.status(400).json({ error: 'Card not found' });
 			return;
 		}
 
-		try {
-			const snapshot = await db
-				.collection('cards')
-				.where('boardId', '==', boardId)
-				.orderBy('boardIndex')
-				.get();
+		const [movedCard] = cards.splice(sourceIndex, 1);
+		cards.splice(targetIndex, 0, movedCard);
 
-			const cards = snapshot.docs.map((doc) => ({
-				id: doc.id,
-				...doc.data(),
-			})) as Card[];
+		const batch = db.batch();
+		cards.forEach((card, i) => {
+			const ref = db.collection('cards').doc(card.id);
+			batch.update(ref, { boardIndex: i });
+		});
 
-			const sourceIndex = cards.findIndex((card) => card.id === sourceId);
-			const targetIndex = cards.findIndex((card) => card.id === targetId);
+		await batch.commit();
 
-			if (sourceIndex === -1 || targetIndex === -1) {
-				res.status(400).json({ error: 'Card not found' });
-				return;
-			}
-
-			const [movedCard] = cards.splice(sourceIndex, 1);
-			cards.splice(targetIndex, 0, movedCard);
-
-			const batch = db.batch();
-			cards.forEach((card, i) => {
-				const ref = db.collection('cards').doc(card.id);
-				batch.update(ref, { boardIndex: i });
-			});
-
-			await batch.commit();
-
-
-			res.status(200).json(cards);
-		} catch (error) {
-			console.error(error);
-			res.status(500).json({ error: 'Failed to reorder cards', details: error });
-		}
+		res.status(200).json(cards);
+	} catch (error) {
+		console.error(error);
+		res.status(500).json({ error: 'Failed to reorder cards', details: error });
 	}
-);
+});
 
 router.use('/:id/tasks', taskRoute);
 

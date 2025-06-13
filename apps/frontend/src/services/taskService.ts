@@ -23,9 +23,6 @@ export interface CreateTaskBody {
 	status: string;
 }
 
-
-
-
 class TaskService {
 	static async getTasks({
 		boardId,

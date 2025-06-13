@@ -36,8 +36,6 @@ const Main = styled('main', { shouldForwardProp: (prop) => prop !== 'open' })<{ 
 	})
 );
 
-
-
 const DrawerHeader = styled('div')(({ theme }) => ({
 	display: 'flex',
 	alignItems: 'center',
@@ -47,10 +45,8 @@ const DrawerHeader = styled('div')(({ theme }) => ({
 }));
 type Props = {
 	children: React.ReactNode;
-}
-export default function DrawerLayout({
-	children
-}: Props) {
+};
+export default function DrawerLayout({ children }: Props) {
 	const theme = useTheme();
 	const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 	const [open, setOpen] = useState(!isMobile);
@@ -59,10 +55,10 @@ export default function DrawerLayout({
 	const handleDrawerOpen = () => setOpen(true);
 	const handleDrawerClose = () => setOpen(false);
 	const handleAddUser = () => {
-		setOpenUserModal(true)
-	}
+		setOpenUserModal(true);
+	};
 	return (
-		<Box sx={{ display: 'flex'}}>
+		<Box sx={{ display: 'flex' }}>
 			<>
 				<IconButton
 					color="inherit"
@@ -70,10 +66,10 @@ export default function DrawerLayout({
 					onClick={handleDrawerOpen}
 					edge="start"
 					sx={{
-						...(isMobile ?
-								{ ml: 1, mt: 2, width: 10, height: 10 } :
-								{ ml: 2, mt: '10px', width: 30, height: 30 }),
-						...(open && { display: 'none' })
+						...(isMobile
+							? { ml: 1, mt: 2, width: 10, height: 10 }
+							: { ml: 2, mt: '10px', width: 30, height: 30 }),
+						...(open && { display: 'none' }),
 					}}
 				>
 					<ChevronRightIcon />
@@ -94,7 +90,7 @@ export default function DrawerLayout({
 					open={open}
 				>
 					<DrawerHeader>
-						<Stack direction={'row'} alignItems='center'>
+						<Stack direction={'row'} alignItems="center">
 							<Typography variant="h6">Members</Typography>
 							<IconButton onClick={handleAddUser}>
 								<AddCircleOutlineIcon />
@@ -108,13 +104,8 @@ export default function DrawerLayout({
 					<UserList />
 				</Drawer>
 			</>
-			<Main open={open}>
-				{children}
-			</Main>
-			<UserInvitationModal
-				open={openUserModal}
-				onClose={() => setOpenUserModal(false)}
-			/>
+			<Main open={open}>{children}</Main>
+			<UserInvitationModal open={openUserModal} onClose={() => setOpenUserModal(false)} />
 		</Box>
 	);
 }

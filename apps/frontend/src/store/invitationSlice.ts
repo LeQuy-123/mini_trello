@@ -4,7 +4,6 @@ import InvitationService, { type Invitation } from '@services/invitationService'
 import { getDefaultAsyncState, showError, showSuccess } from '@utils/helper';
 import type { AsyncStatus } from '@utils/type';
 
-
 export const getInvitations = createAsyncThunk('invitations/getAll', async (_, thunkAPI) => {
 	try {
 		const invitations: Invitation[] = await InvitationService.getInvitations();
@@ -48,7 +47,6 @@ export const respondToInvitation = createAsyncThunk(
 	}
 );
 
-
 export const getUser = createAsyncThunk('invitations/getUsers', async (_, thunkAPI) => {
 	try {
 		const res = await InvitationService.getUser();
@@ -57,7 +55,6 @@ export const getUser = createAsyncThunk('invitations/getUsers', async (_, thunkA
 		return thunkAPI.rejectWithValue(error?.message || 'Failed to fetch user');
 	}
 });
-
 
 interface InvitationState {
 	users: User[];
@@ -76,7 +73,6 @@ const initialState: InvitationState = {
 	get: getDefaultAsyncState(),
 	getUser: getDefaultAsyncState(),
 };
-
 
 const invitationSlice = createSlice({
 	name: 'invitations',

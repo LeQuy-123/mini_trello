@@ -211,7 +211,7 @@ router.get('/:id', authenticate, async (req: Request, res: Response) => {
 
 		if (!doc.exists) {
 			res.sendStatus(404);
-			return
+			return;
 		}
 
 		const data = doc.data();
@@ -221,7 +221,7 @@ router.get('/:id', authenticate, async (req: Request, res: Response) => {
 
 		if (!isOwner && !isMember) {
 			res.sendStatus(403);
-			return
+			return;
 		}
 
 		res.status(200).json({ id: doc.id, ...data });
@@ -230,7 +230,6 @@ router.get('/:id', authenticate, async (req: Request, res: Response) => {
 		res.status(500).json({ message: 'Internal server error' });
 	}
 });
-
 
 /**
  * @swagger
@@ -315,18 +314,18 @@ router.delete('/:id', authenticate, async (req: Request, res: Response) => {
 
 	if (!boardDoc.exists || boardDoc.data()?.userId !== req.uid) {
 		res.sendStatus(404);
-		return
+		return;
 	}
 	try {
 		const batch = db.batch();
 		const tasksSnap = await db.collection('tasks').where('boardId', '==', boardId).get();
 		tasksSnap.forEach((doc) => batch.delete(doc.ref));
-		const cardsSnap = await db.collection('cards').where('boardId', '==', boardId).get()
+		const cardsSnap = await db.collection('cards').where('boardId', '==', boardId).get();
 		cardsSnap.forEach((doc) => batch.delete(doc.ref));
 		batch.delete(boardRef);
 		await batch.commit();
 		res.sendStatus(204);
-		return
+		return;
 	} catch (error) {
 		console.error('Failed to delete board with related cards and tasks:', error);
 		res.status(500).json({ error: 'Failed to delete board and related items.' });
@@ -368,44 +367,44 @@ router.delete('/:id', authenticate, async (req: Request, res: Response) => {
  *         description: Board not found
  */
 router.get('/:id/users', authenticate, async (req: Request, res: Response) => {
-    const boardId = req.params.id;
+	const boardId = req.params.id;
 
-    try {
-        const boardDoc = await db.collection('boards').doc(boardId).get();
-        if (!boardDoc.exists) {
+	try {
+		const boardDoc = await db.collection('boards').doc(boardId).get();
+		if (!boardDoc.exists) {
 			res.status(404).json({ error: 'Board not found' });
-            return
-        }
-
-        const boardData = boardDoc.data();
-        const ownerId = boardData?.userId;
-        const memberIds: string[] = boardData?.members || [];
-
-        const userIds = [ownerId, ...memberIds.filter((id) => id !== ownerId)];
-
-        if (userIds.length === 0) {
-			res.status(200).json([]);
-			return
+			return;
 		}
 
-        const userSnapshots = await Promise.all(
-            userIds.map((uid) => db.collection('users').doc(uid).get())
-        );
+		const boardData = boardDoc.data();
+		const ownerId = boardData?.userId;
+		const memberIds: string[] = boardData?.members || [];
 
-        const users = userSnapshots
-            .filter((doc) => doc.exists)
-            .map((doc) => ({
-                id: doc.id,
-                ...doc.data(),
-            }));
+		const userIds = [ownerId, ...memberIds.filter((id) => id !== ownerId)];
 
-        users.sort((a, b) => (a.id === ownerId ? -1 : b.id === ownerId ? 1 : 0));
+		if (userIds.length === 0) {
+			res.status(200).json([]);
+			return;
+		}
+
+		const userSnapshots = await Promise.all(
+			userIds.map((uid) => db.collection('users').doc(uid).get())
+		);
+
+		const users = userSnapshots
+			.filter((doc) => doc.exists)
+			.map((doc) => ({
+				id: doc.id,
+				...doc.data(),
+			}));
+
+		users.sort((a, b) => (a.id === ownerId ? -1 : b.id === ownerId ? 1 : 0));
 		res.status(200).json(users);
-        return
-    } catch (error) {
+		return;
+	} catch (error) {
 		res.status(500).json({ error: 'Failed to fetch board users', details: error });
-        return
-    }
+		return;
+	}
 });
 
 router.use('/:boardId/cards', cardRoutes);

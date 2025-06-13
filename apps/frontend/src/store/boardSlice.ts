@@ -114,7 +114,10 @@ const boardSlice = createSlice({
 		},
 	},
 	extraReducers: (builder) => {
-		const handleAsync = <K extends keyof Omit<BoardState, 'boards' | 'board' | 'users'>>(type: K, thunk: any) => {
+		const handleAsync = <K extends keyof Omit<BoardState, 'boards' | 'board' | 'users'>>(
+			type: K,
+			thunk: any
+		) => {
 			builder
 				.addCase(thunk.pending, (state) => {
 					state[type].loading = true;
@@ -156,7 +159,6 @@ const boardSlice = createSlice({
 		handleAsync('update', updateBoard);
 		handleAsync('remove', deleteBoard);
 		handleAsync('getUsers', getUsers);
-
 	},
 });
 

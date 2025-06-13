@@ -35,7 +35,7 @@ export default function AppLayout() {
 	const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 	const location = useLocation();
 	const navigate = useNavigate();
-	const { logout } = useAuth()
+	const { logout } = useAuth();
 	const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 	const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
 		setAnchorEl(event.currentTarget);
@@ -98,10 +98,14 @@ export default function AppLayout() {
 									}}
 								>
 									{tabRoutes.map((tab) => (
-										<MenuItem onClick={() => {
-											navigate(tab.path);
-											handleMenuClose();
-										}} key={tab.path} value={tab.path}>
+										<MenuItem
+											onClick={() => {
+												navigate(tab.path);
+												handleMenuClose();
+											}}
+											key={tab.path}
+											value={tab.path}
+										>
 											{tab.label}
 										</MenuItem>
 									))}
@@ -117,15 +121,17 @@ export default function AppLayout() {
 										/>
 									</MenuItem>
 									<MenuItem>
-										<InvitationDropdown label='Invitaions'/>
+										<InvitationDropdown label="Invitaions" />
 									</MenuItem>
 									<MenuItem>
 										<Typography variant="body2">Hello, {user?.name}</Typography>
 									</MenuItem>
-									<MenuItem onClick={() => {
-										logout();
-										handleMenuClose();
-									}}>
+									<MenuItem
+										onClick={() => {
+											logout();
+											handleMenuClose();
+										}}
+									>
 										Logout
 									</MenuItem>
 								</Menu>

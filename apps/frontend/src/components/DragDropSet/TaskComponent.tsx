@@ -1,12 +1,5 @@
 import React, { useState } from 'react';
-import {
-	Box,
-	Typography,
-	IconButton,
-	Menu,
-	MenuItem,
-	useTheme,
-} from '@mui/material';
+import { Box, Typography, IconButton, Menu, MenuItem, useTheme } from '@mui/material';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import type { Task } from '@services/taskService';
 import { statusColors } from '@utils/helper';
@@ -30,15 +23,12 @@ const TaskItem: React.FC<TaskItemProps> = ({ task, onEdit, onDelete, taskIndex }
 	};
 
 	const handleClose = () => setAnchorEl(null);
-	const {
-		ref,
-		isDragging
-	} = useSortable({
+	const { ref, isDragging } = useSortable({
 		id: task.id,
 		index: taskIndex,
 		type: 'item',
 		accept: 'item',
-		group: task.cardId
+		group: task.cardId,
 	});
 	return (
 		<Box
@@ -51,10 +41,11 @@ const TaskItem: React.FC<TaskItemProps> = ({ task, onEdit, onDelete, taskIndex }
 						? theme.palette.grey[900]
 						: theme.palette.background.default,
 				borderRadius: 2,
-				border: `1px solid ${theme.palette.mode === 'dark'
-					? theme.palette.grey[800]
-					: theme.palette.grey[300]
-					}`,
+				border: `1px solid ${
+					theme.palette.mode === 'dark'
+						? theme.palette.grey[800]
+						: theme.palette.grey[300]
+				}`,
 				boxShadow: 1,
 				cursor: 'pointer',
 				overflow: 'hidden',
@@ -64,18 +55,16 @@ const TaskItem: React.FC<TaskItemProps> = ({ task, onEdit, onDelete, taskIndex }
 				},
 				opacity: isDragging ? 0.8 : 1,
 				borderLeft: `6px solid ${statusColors[task.status]}`,
-
 			}}
 			ref={ref}
 			data-dragging={isDragging}
 			onClick={() => console.log('Task clicked')}
-
 		>
-			<Box sx={{
-				pr: 5,
-				userSelect: 'none',
-			}}
-
+			<Box
+				sx={{
+					pr: 5,
+					userSelect: 'none',
+				}}
 			>
 				<Typography variant="subtitle2" fontWeight={500}>
 					{task.title}

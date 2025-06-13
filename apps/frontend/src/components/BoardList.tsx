@@ -63,7 +63,7 @@ export const BoardList = ({ created }: Props) => {
 
 	const handleDelete = () => {
 		if (menuBoardId) {
-			deleteBoard(menuBoardId)
+			deleteBoard(menuBoardId);
 		}
 		handleMenuClose();
 	};

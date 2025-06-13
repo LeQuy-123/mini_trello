@@ -1,5 +1,14 @@
 import React, { useEffect } from 'react';
-import { Modal, Box, Typography, Button, Fade, CircularProgress, TextField, MenuItem } from '@mui/material';
+import {
+	Modal,
+	Box,
+	Typography,
+	Button,
+	Fade,
+	CircularProgress,
+	TextField,
+	MenuItem,
+} from '@mui/material';
 import { Controller, useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
@@ -29,13 +38,14 @@ const schema = yup.object({
 	status: yup.string().required('Status is required'),
 });
 
-export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ open, onClose, board, card, task  }) => {
-	const {
-		createTask,
-		updateTask,
-		createTaskStatus,
-		updateTaskStatus
-	} = useTask()
+export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
+	open,
+	onClose,
+	board,
+	card,
+	task,
+}) => {
+	const { createTask, updateTask, createTaskStatus, updateTaskStatus } = useTask();
 	const {
 		control,
 		handleSubmit,
@@ -47,8 +57,8 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ open, onClose,
 		defaultValues: {
 			title: '',
 			description: '',
-			status: 'new'
-		}
+			status: 'new',
+		},
 	});
 	useEffect(() => {
 		if (task) {
@@ -65,13 +75,13 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ open, onClose,
 				boardId: board.id,
 				cardId: card.id,
 				taskId: task.id,
-				data
+				data,
 			});
 		} else {
 			await createTask({
 				boardId: board.id,
 				cardId: card.id,
-				data
+				data,
 			});
 		}
 		reset();
@@ -132,11 +142,10 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ open, onClose,
 									onBlur={field.onBlur}
 									inputRef={field.ref}
 									select
-									sx={{mt: 4, width: '100%'}}
+									sx={{ mt: 4, width: '100%' }}
 									label="Status"
 									error={!!errors.status}
 									helperText={errors.status?.message}
-
 								>
 									<MenuItem value="new">New</MenuItem>
 									<MenuItem value="wip">WIP</MenuItem>
@@ -145,7 +154,6 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ open, onClose,
 								</TextField>
 							)}
 						/>
-
 
 						<Box mt={4} display="flex" justifyContent="flex-end" gap={2}>
 							<Button

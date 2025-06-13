@@ -1,6 +1,6 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import { createAsyncThunk } from '@reduxjs/toolkit';
-import CardService, { type  Card, type CardReorderBody } from '@services/cardService';
+import CardService, { type Card, type CardReorderBody } from '@services/cardService';
 import { showError, showSuccess } from '@utils/helper';
 
 export const getCards = createAsyncThunk(
@@ -215,9 +215,9 @@ const cardSlice = createSlice({
 		handleAsync('update', updateCard);
 		handleAsync('remove', deleteCard);
 		handleAsync('reorder', reorderCard);
-
 	},
 });
 
-export const { resetCardStatus, clearCards, incrementTaskCount, decrementTaskCount } = cardSlice.actions;
+export const { resetCardStatus, clearCards, incrementTaskCount, decrementTaskCount } =
+	cardSlice.actions;
 export default cardSlice.reducer;

@@ -1,26 +1,14 @@
 import React, { useState } from 'react';
-import {
-	Menu,
-	MenuItem,
-	IconButton,
-	Box,
-	Typography,
-	Divider,
-	Button,
-	Chip,
-} from '@mui/material';
+import { Menu, MenuItem, IconButton, Box, Typography, Divider, Button, Chip } from '@mui/material';
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import { getBorderColor } from '@utils/helper';
 import { useInvitation } from '@utils/useInvitation';
 import type { Invitation } from '@services/invitationService';
 import { useBoard } from '@utils/useBoard';
 
-
-const InvitationDropdown = ({
-	label,
-}: {label?: string}) => {
-	const {invitations, respondToInvitation, getInvitations} = useInvitation()
-	const { getBoards } = useBoard()
+const InvitationDropdown = ({ label }: { label?: string }) => {
+	const { invitations, respondToInvitation, getInvitations } = useInvitation();
+	const { getBoards } = useBoard();
 
 	const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 	const open = Boolean(anchorEl);
@@ -32,21 +20,26 @@ const InvitationDropdown = ({
 	const handleClose = () => {
 		setAnchorEl(null);
 	};
-	const handleRespond = (inv: Invitation, status: "accepted" | "declined") => respondToInvitation(inv.boardId, {
-		invite_id: inv.id,
-		status: status
-	}).then(() => {
-		getInvitations()
-		getBoards({})
-	})
+	const handleRespond = (inv: Invitation, status: 'accepted' | 'declined') =>
+		respondToInvitation(inv.boardId, {
+			invite_id: inv.id,
+			status: status,
+		}).then(() => {
+			getInvitations();
+			getBoards({});
+		});
 
 	return (
 		<>
-			{label ? <Typography variant="body1" sx={{ }} onClick={handleOpen}>
-				{label}
-			</Typography> :<IconButton color="inherit" onClick={handleOpen}>
+			{label ? (
+				<Typography variant="body1" sx={{}} onClick={handleOpen}>
+					{label}
+				</Typography>
+			) : (
+				<IconButton color="inherit" onClick={handleOpen}>
 					<NotificationsIcon />
-				</IconButton>}
+				</IconButton>
+			)}
 
 			<Menu anchorEl={anchorEl} open={open} onClose={handleClose}>
 				{invitations.length === 0 ? (
@@ -71,8 +64,6 @@ const InvitationDropdown = ({
 								Board Invite
 							</Typography>
 
-
-
 							{invitation.status === 'pending' ? (
 								<Box mt={1} display="flex" gap={1}>
 									<Button
@@ -92,18 +83,20 @@ const InvitationDropdown = ({
 										Reject
 									</Button>
 								</Box>
-							) : <Chip
-								label={invitation.status.toUpperCase()}
-								size="small"
-								color={
-									invitation.status === 'accepted'
-										? 'success'
-										: invitation.status === 'rejected'
-											? 'error'
-											: 'default'
-								}
-								sx={{ mt: 1, width: 'fit-content' }}
-							/>}
+							) : (
+								<Chip
+									label={invitation.status.toUpperCase()}
+									size="small"
+									color={
+										invitation.status === 'accepted'
+											? 'success'
+											: invitation.status === 'rejected'
+												? 'error'
+												: 'default'
+									}
+									sx={{ mt: 1, width: 'fit-content' }}
+								/>
+							)}
 							<Divider sx={{ mt: 1 }} />
 						</Box>
 					))

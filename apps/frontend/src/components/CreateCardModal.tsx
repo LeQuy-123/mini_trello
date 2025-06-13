@@ -12,7 +12,7 @@ type CreateCardForm = {
 };
 
 type CreateCardModalProps = {
-	boardId: string
+	boardId: string;
 	open: boolean;
 	onClose: () => void;
 	card?: { id: string; name: string; description: string } | null;
@@ -23,8 +23,13 @@ const schema = yup.object({
 	description: yup.string().required('Description is required'),
 });
 
-export const CreateCardModal: React.FC<CreateCardModalProps> = ({ open, onClose, card, boardId }) => {
-	const { createCard, updateCard, createCardsStatus,updateCardsStatus } = useCard();
+export const CreateCardModal: React.FC<CreateCardModalProps> = ({
+	open,
+	onClose,
+	card,
+	boardId,
+}) => {
+	const { createCard, updateCard, createCardsStatus, updateCardsStatus } = useCard();
 	const {
 		control,
 		handleSubmit,
@@ -44,17 +49,20 @@ export const CreateCardModal: React.FC<CreateCardModalProps> = ({ open, onClose,
 	}, [card, open]);
 	const onSubmit = async (data: CreateCardForm) => {
 		if (card) {
-			updateCard(boardId, card?.id, data)?.unwrap().finally(() => {
-				reset();
-				onClose();
-			})
+			updateCard(boardId, card?.id, data)
+				?.unwrap()
+				.finally(() => {
+					reset();
+					onClose();
+				});
 		} else {
-			createCard(boardId, data)?.unwrap().finally(() => {
-				reset();
-				onClose();
-			})
+			createCard(boardId, data)
+				?.unwrap()
+				.finally(() => {
+					reset();
+					onClose();
+				});
 		}
-
 	};
 	const handleClose = () => {
 		reset();
