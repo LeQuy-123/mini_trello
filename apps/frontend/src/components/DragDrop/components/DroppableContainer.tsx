@@ -30,9 +30,10 @@ export default function DroppableContainer({
 	id: UniqueIdentifier;
 	items: UniqueIdentifier[];
 	style?: SxProps<any> ;
-	data: Card
+	data: Card;
+	onLabelClick: () => void;
 }) {
-	const { active, attributes, isDragging, listeners, over, setNodeRef, transition, transform } =
+	const { active, attributes, isDragging, listeners, over, setNodeRef, transition, transform,  } =
 		useSortable({
 			id,
 			data: {

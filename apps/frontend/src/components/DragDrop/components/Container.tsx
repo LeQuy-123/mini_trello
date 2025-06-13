@@ -11,7 +11,6 @@ import {
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import CloseIcon from '@mui/icons-material/Close';
 import type { Card } from '@services/cardService';
-
 export interface Props {
 	children: React.ReactNode;
 	data?: Card;
@@ -27,6 +26,7 @@ export interface Props {
 	unstyled?: boolean;
 	onClick?(): void;
 	onRemove?(): void;
+	onLabelClick?: () => void;
 }
 
 export const Container = forwardRef<HTMLDivElement, Props>(
@@ -45,6 +45,7 @@ export const Container = forwardRef<HTMLDivElement, Props>(
 			handleProps,
 			style,
 			data,
+			onLabelClick,
 			...props
 		}: Props,
 		ref
@@ -94,10 +95,13 @@ export const Container = forwardRef<HTMLDivElement, Props>(
 				{data && !isPlaceholder && (
 					<CardHeader
 						title={
-							<Box sx={{maxWidth: 250}}>
+							<Box
+								onClick={() => onLabelClick?.()}
+								sx={{ maxWidth: 250, px: 1, pb: 1, borderRadius: 1, '&:hover': onLabelClick ? { backgroundColor: theme.palette.action.hover , cursor: 'pointer'} : undefined }}>
 								<Typography variant="h6" noWrap>
 									{data?.name}
 								</Typography>
+
 								<Typography variant="body2" noWrap>
 									{data?.description}
 								</Typography>

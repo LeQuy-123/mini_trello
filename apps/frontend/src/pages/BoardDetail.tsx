@@ -1,5 +1,5 @@
 import { Box, Typography } from '@mui/material';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useBoard } from '@utils/useBoard';
 import ErrorPage from '@components/ErrorPage';
@@ -13,6 +13,7 @@ import { MultipleContainers } from '@components/DragDrop/MultipleContainers';
 import type { Task } from '@services/taskService';
 import type { Card } from '@services/cardService';
 import type { Active, Over } from '@dnd-kit/core';
+import { CreateCardModal } from '@components/CreateCardModal';
 
 export default function BoardDetail() {
 	const { id } = useParams<{ id: string }>();
@@ -22,6 +23,10 @@ export default function BoardDetail() {
 	const { getCards, cards, deleteCard, reorderCard } = useCard();
 	const { getTasks, tasksByCardId, deleteTask } = useTask();
 
+	const [selectedCard, setSelectedCard] = useState<null | Card>(null);
+	const [open, setOpen] = useState(false);
+	const handleClose = () => setOpen(false);
+	const handleOpen = () => setOpen(true);
 	useEffect(() => {
 		fetchData();
 	}, []);
@@ -120,35 +125,50 @@ export default function BoardDetail() {
 				});
 			});
 	}
+	const handleAddCard = (card?: Card) => {
+		setSelectedCard(card || null)
+		handleOpen()
+	}
 	if (getDetailBoardsStatus.error) return <ErrorPage message={getDetailBoardsStatus.error} />;
 
 	return (
-		<DrawerLayout>
-			<Box sx={{ pl: 2, pt: 1 }}>
-				<Box>
-					<Typography variant="h6" gutterBottom>
-						{boardDetail?.name}
-					</Typography>
-					<Typography variant="body2" color="text.secondary">
-						{boardDetail?.description}
-					</Typography>
+		<>
+			<DrawerLayout>
+				<Box sx={{ pl: 2, pt: 1 }}>
+					<Box>
+						<Typography variant="h6" gutterBottom>
+							{boardDetail?.name}
+						</Typography>
+						<Typography variant="body2" color="text.secondary">
+							{boardDetail?.description}
+						</Typography>
+					</Box>
+					<MultipleContainers
+						items={cards?.map((card) => ({
+							...card,
+							tasks: tasksByCardId[card.id]
+						}))}
+						containerStyle={{
+							backgroundColor: theme => {
+								return theme.palette.action.focus
+							}
+						}}
+						strategy={rectSortingStrategy}
+						onRemoveTask={handleDeleteTask}
+						onRemoveCard={handleDeleteCard}
+						onReorderCard={handleReorderCard}
+						onCardClick={handleAddCard}
+					/>
 				</Box>
-				<MultipleContainers
-					items={cards?.map((card) => ({
-						...card,
-						tasks: tasksByCardId[card.id]
-					}))}
-					containerStyle={{
-						backgroundColor: theme => {
-							return theme.palette.action.focus
-						}
-					}}
-					strategy={rectSortingStrategy}
-					onRemoveTask={handleDeleteTask}
-					onRemoveCard={handleDeleteCard}
-					onReorderCard={handleReorderCard}
+			</DrawerLayout>
+			{id && (
+				<CreateCardModal
+					open={open}
+					boardId={id}
+					onClose={handleClose}
+					card={selectedCard}
 				/>
-			</Box>
-		</DrawerLayout>
+			)}
+		</>
 	);
 }

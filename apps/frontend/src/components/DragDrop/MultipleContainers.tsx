@@ -37,8 +37,8 @@ import DroppableContainer from '@components/DragDrop/components/DroppableContain
 import SortableItem from '@components/DragDrop/components/SortableItem';
 import type { Card } from '@services/cardService';
 import type { Task } from '@services/taskService';
-import type { SxProps } from '@mui/material';
-import type { Theme } from '@mui/system';
+import { Box, Typography, type SxProps } from '@mui/material';
+import { type Theme } from '@mui/system';
 
 export default {
 	title: 'Presets/Sortable/Multiple Containers',
@@ -85,6 +85,7 @@ interface Props {
 	onRemoveTask: (task: Task) => void;
 	onRemoveCard: (card: Card) => void;
 	onReorderCard: (data: { active: Active, over: Over | null }) => void;
+	onCardClick: (card?: Card) => void;
 }
 
 export function MultipleContainers({
@@ -104,6 +105,7 @@ export function MultipleContainers({
 	onRemoveTask,
 	onRemoveCard,
 	onReorderCard,
+	onCardClick,
 }: Props) {
 
 	// Hooks & State
@@ -232,7 +234,7 @@ export function MultipleContainers({
 					if (activeCard.id === overCard.id && active.id === over.id) return;
 
 					const fromTasks = [...activeCard.tasks];
-					const toTasks = [...overCard.tasks];
+					const toTasks = [...(overCard.tasks || [])];
 
 					const fromIndex = fromTasks.findIndex(task => task.id === active.id);
 					const overIndex = toTasks.findIndex(task => task.id === over.id);
@@ -352,6 +354,7 @@ export function MultipleContainers({
 								style={containerStyle}
 								unstyled={minimal}
 								onRemove={() => handleRemove(card.id)}
+								onLabelClick={() => onCardClick(card)}
 							>
 								<SortableContext items={tasks} strategy={strategy}>
 									{tasks?.map((task, index) => (
@@ -371,12 +374,19 @@ export function MultipleContainers({
 											onRemove={() => onRemoveTask(task)}
 										/>
 									))}
+
 								</SortableContext>
 							</DroppableContainer>
 						)
 					})}
 
-
+					<Container onClick={() => onCardClick()} hover style={{cursor:'pointer'}}>
+						<Box sx={{with: '100%',  display: 'flex', justifyContent: 'center', alignItems: 'center', mt: 6}}>
+							<Typography variant='h5'>
+								+ Card
+							</Typography>
+						</Box>
+					</Container>
 				</SortableContext>
 			</div>
 
