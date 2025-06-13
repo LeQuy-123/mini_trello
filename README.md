@@ -49,7 +49,7 @@ cd apps/frontend
 yarn dev
 
 # Start backend
-cd ../backend
+cd apps/backend
 yarn dev
 
 # Or start both, using concurrently
