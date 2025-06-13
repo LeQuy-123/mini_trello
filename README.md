@@ -57,10 +57,10 @@ yarn dev
 
 ## 📌 Features
 
+* Authentication (sign in/up)
 * Create, update, and delete boards
 * Drag-and-drop cards and tasks
 * Real-time UI updates
-* Authentication (sign in/up)
 * Fully responsive layout
 
 ---
