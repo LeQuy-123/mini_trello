@@ -495,6 +495,12 @@ export function MultipleContainers({
 						renderItem={renderItem}
 					/>
 				))}
+				<Item
+					value={'+ Task'}
+					color={'green'}
+					renderItem={renderItem}
+					onTaskClick={() => onTaskClick(card, undefined)}
+				/>
 			</Container>
 		);
 	}

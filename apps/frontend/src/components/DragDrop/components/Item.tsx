@@ -187,7 +187,8 @@ export const Item = React.memo(
 											},
 											width: '100%',
 											textAlign: data ? 'start' :'center',
-											pr: 2
+											pr: 2,
+											maxWidth: 250
 										}}
 										onClick={onTaskClick}
 									>
@@ -200,7 +201,7 @@ export const Item = React.memo(
 							{onRemove && (
 								<IconButton
 									className="remove-btn"
-									sx={{ visibility: 'hidden' }}
+									sx={{ visibility: 'hidden', mt: 1 }}
 									size="small"
 									onClick={(e) => {
 										e.stopPropagation()
