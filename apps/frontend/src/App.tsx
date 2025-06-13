@@ -12,6 +12,7 @@ import AppLayout from '@components/AppLayout';
 import Settings from '@pages/Settings';
 import Profile from '@pages/Profile';
 import BoardDetail from '@pages/BoardDetail';
+import GitHubCallback from '@pages/GitHubCallback';
 
 function App() {
 	const { mode } = useCustomTheme();
@@ -70,6 +71,7 @@ function App() {
 					<Route path="/settings" element={<Settings />} />
 					<Route path="/profile" element={<Profile />} />
 				</Route>
+				<Route path="/github-callback" element={<GitHubCallback />} />
 				<Route path="*" element={<Navigate to="/signin" replace />} />
 			</Routes>
 		</ThemeProvider>

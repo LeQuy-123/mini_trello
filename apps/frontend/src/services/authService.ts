@@ -31,8 +31,10 @@ class AuthService {
 		return res.data;
 	}
 
-	async fetchProfile(): Promise<User> {
-		const res = await apiClient.get<User>('auth/profile');
+	async fetchProfile(token?: string): Promise<User> {
+		const res = await apiClient.get<User>('auth/profile', {
+			headers: token ? { Authorization: `Bearer ${token}` } : {}, // No extra headers if no token
+		});
 		return res.data;
 	}
 }

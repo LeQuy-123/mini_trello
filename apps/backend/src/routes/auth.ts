@@ -12,6 +12,7 @@ import { db } from '../firebase';
 import { User } from '../types/User';
 import { authenticate } from '../middleware/authMiddleware';
 import dotenv from 'dotenv';
+import axios from 'axios';
 
 dotenv.config();
 
@@ -159,6 +160,104 @@ router.get('/profile', authenticate, async (req: Request, res: Response) => {
 
 	const { password, ...userData } = doc.data() as User;
 	res.json(userData);
+});
+
+
+/**
+ * @swagger
+ * /auth/github:
+ *   get:
+ *     summary: Redirect to GitHub for authentication
+ *     tags: [Auth]
+ */
+router.get('/github', (_req, res) => {
+	const redirectUri = `https://github.com/login/oauth/authorize?client_id=${process.env.GITHUB_CLIENT_ID}&redirect_uri=${process.env.GITHUB_CALLBACK_URL}&scope=user:email`;
+	res.redirect(redirectUri);
+});
+
+/**
+ * @swagger
+ * /auth/github/callback:
+ *   get:
+ *     summary: GitHub OAuth2 callback handler
+ *     tags: [Auth]
+ */
+router.get('/github/callback', async (req: Request, res: Response) => {
+	const { code } = req.query;
+
+	if (!code) {
+		res.status(400).json({ message: 'Authorization code missing' });
+		return
+	}
+
+	try {
+		const tokenResponse = await axios.post(
+			'https://github.com/login/oauth/access_token',
+			{
+				client_id: process.env.GITHUB_CLIENT_ID,
+				client_secret: process.env.GITHUB_CLIENT_SECRET,
+				code,
+			},
+			{
+				headers: {
+					Accept: 'application/json',
+				},
+			}
+		);
+
+		const accessToken = tokenResponse.data.access_token;
+
+		const userResponse = await axios.get('https://api.github.com/user', {
+			headers: {
+				Authorization: `Bearer ${accessToken}`,
+			},
+		});
+
+		const emailResponse = await axios.get('https://api.github.com/user/emails', {
+			headers: {
+				Authorization: `Bearer ${accessToken}`,
+			},
+		});
+
+		const githubUser = userResponse.data;
+		const primaryEmailObj = emailResponse.data.find((e: any) => e.primary) || emailResponse.data[0];
+
+		const usersRef = db.collection('users');
+		const existingSnap = await usersRef.where('email', '==', primaryEmailObj.email).get();
+
+		let userDoc;
+		let userData;
+
+		if (!existingSnap.empty) {
+			userDoc = existingSnap.docs[0];
+			userData = userDoc.data() as User;
+		} else {
+			userDoc = usersRef.doc();
+			userData = {
+				id: userDoc.id,
+				email: primaryEmailObj.email,
+				name: githubUser.name || githubUser.login,
+				password: '', // No password for OAuth
+				createdAt: new Date(),
+			};
+			await userDoc.set(userData);
+		}
+
+		const token = jwt.sign({ uid: userDoc.id }, process.env.JWT_SECRET!, { expiresIn: '7d' });
+		res.redirect(`http://localhost:5173/github-callback?token=${token}`);
+
+		// res.json({
+		// 	user: {
+		// 		id: userDoc.id,
+		// 		email: userData.email,
+		// 		name: userData.name,
+		// 	},
+		// 	token,
+		// });
+	} catch (error) {
+		console.error('GitHub OAuth error:', error);
+		res.status(500).json({ message: 'GitHub OAuth failed' });
+	}
 });
 
 export default router;

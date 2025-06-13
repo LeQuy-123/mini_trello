@@ -134,14 +134,11 @@ export default function SignIn() {
 							</Box>
 						</Typography>
 					</Box>
-					<Button
-						fullWidth
-						variant="outlined"
-						sx={{ mt: 4, height: 40 }}
-						onClick={() => {}}
-					>
-						Sign in with GitHub
-					</Button>
+					<Box sx={{width: '100%', display: 'flex', justifyContent: 'center'}}>
+						<a href={`${import.meta.env.VITE_API_DOMAIN}/auth/github`}>
+							<Button sx={{ mt: 4, height: 40 }}>Login with GitHub</Button>
+						</a>
+					</Box>
 				</form>
 			</Card>
 		</Box>
