@@ -57,11 +57,31 @@ yarn dev
 
 ## 📌 Features
 
-* Authentication (sign in/up)
-* Create, update, and delete boards
-* Drag-and-drop cards and tasks
+* Authentication (sign in/up), also have sign in with GitHub  
+  <img src="./assets/login.png" alt="Login" width="300"/>  
+  <img src="./assets/signUp.png" alt="Sign Up" width="300"/>
+
+* Create, update, and delete boards  
+  <img src="./assets/addBoard.png" alt="Add Board" width="300"/>  
+  <img src="./assets/editBoard.png" alt="Edit Board" width="300"/>  
+  <img src="./assets/boardList.png" alt="Board List" width="300"/>
+
+* Create, update, and delete cards and tasks inside a board  
+  <img src="./assets/addCard.png" alt="Add Card" width="300"/>  
+  <img src="./assets/addTask.png" alt="Add Task" width="300"/>  
+  <img src="./assets/editCard.png" alt="Edit Card" width="300"/>  
+  <img src="./assets/editTask.png" alt="Edit Task" width="300"/>
+
 * Real-time UI updates
-* Fully responsive layout
+
+* Fully responsive layout  
+  <img src="./assets/boardListMobile.png" alt="Board List Mobile" width="200"/>  
+  <img src="./assets/loginMobile.png" alt="Login Mobile" width="200"/>
+
+* Invitation  
+  <img src="./assets/invitationList.png" alt="Invitation List" width="300"/>  
+  <img src="./assets/inviteUser.png" alt="Invite User" width="300"/>
+
 
 ---
 
@@ -96,9 +116,11 @@ frontend/
 ```
 apps/backend/
 ├── src/
-│   ├── controllers/
+│   ├── middleware/
 │   ├── routes/
-│   ├── models/
+│   ├── types/
+│   ├── firebase.ts
+│   ├── socket.ts
 │   └── index.ts
 ```
 
