@@ -101,7 +101,7 @@ apps/backend/
 │   ├── models/
 │   └── index.ts
 ```
- 
+
 
 ---
 
@@ -116,9 +116,3 @@ MIT License
 **LeQuy**
 [GitHub](https://github.com/LeQuy-123)
 
-```
-
----
-
-Let me know if you want this tailored more for **deployment**, **API documentation**, or **team contribution**!
-```
