@@ -74,7 +74,7 @@ yarn dev
 
 ---
 
-## 🧱 Folder Structure (example)
+## 🧱 Folder Structure
 
 ```
 frontend/
