@@ -134,12 +134,10 @@ export function MultipleContainers({
 			recentlyMoved.current = false;
 		});
 	}, [items]);
-	const taskListLengthsSignature = initialItems
-		?.map(item => item.tasks?.length ?? 0)
-		.join(',');
+
 	useEffect(() => {
 		setItems(initialItems);
-	}, [initialItems?.length, taskListLengthsSignature]);
+	}, [initialItems]);
 
 	const collisionDetection: CollisionDetection = useCallback((args) => {
 		if (activeId && isCardId(activeId)) {
@@ -224,7 +222,6 @@ export function MultipleContainers({
 				},
 			}}
 			onDragStart={({ active }) => {
-				console.log("🚀 ~onDragStart active:", active.id)
 				setActiveId(active.id);
 				setClonedItems(structuredClone(items));
 			}}
@@ -296,15 +293,18 @@ export function MultipleContainers({
 							return newList
 						}));
 					} else {
-						if (fromIndex === -1) return;
-						const [movedTask] = fromTasks.splice(fromIndex, 1);
-						const insertAt = overIndex >= 0 ? overIndex : toTasks.length;
-						toTasks.splice(insertAt, 0, movedTask);
-						setItems(items.map(card => {
-							if (card.id === activeCard.id) return { ...card, tasks: fromTasks };
-							if (card.id === overCard.id) return { ...card, tasks: toTasks };
-							return card;
-						}));
+						// this block of code in not need
+						// onDragOver already handle update state when move task to diffrent card
+						//
+						// if (fromIndex === -1) return;
+						// const [movedTask] = fromTasks.splice(fromIndex, 1);
+						// const insertAt = overIndex >= 0 ? overIndex : toTasks.length;
+						// toTasks.splice(insertAt, 0, movedTask);
+						// setItems(items.map(card => {
+						// 	if (card.id === activeCard.id) return { ...card, tasks: fromTasks };
+						// 	if (card.id === overCard.id) return { ...card, tasks: toTasks };
+						// 	return card;
+						// }));
 					}
 					setActiveId(null);
 					onReorderTask({

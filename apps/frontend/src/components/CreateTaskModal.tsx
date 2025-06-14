@@ -94,7 +94,13 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
 			})?.unwrap()?.finally(() => {
 				emit('board-updated', {
 					boardId: board.id,
-					update: { type: 'reorder-card' },
+					update: {
+							type: 'reorder-task',
+							data: {
+								boardId: board.id,
+								cardId: card.id,
+							},
+						},
 				});
 			});
 		} else {
@@ -105,7 +111,13 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
 			})?.unwrap()?.finally(() => {
 				emit('board-updated', {
 					boardId: board.id,
-					update: { type: 'reorder-card' },
+					update: {
+							type: 'reorder-task',
+							data: {
+								boardId: board.id,
+								cardId: card.id,
+							},
+						},
 				});
 			});
 		}

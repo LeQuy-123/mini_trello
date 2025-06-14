@@ -1,5 +1,5 @@
 import { Box, Typography } from '@mui/material';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useBoard } from '@utils/useBoard';
 import ErrorPage from '@components/ErrorPage';
@@ -71,15 +71,21 @@ export default function BoardDetail() {
 
 		const onUpdate = (update: any) => {
 			if (update.type === 'reorder-task') {
-				console.log('🚀 ~ onUpdate ~ update:', update.data);
 				getTasks({
 					boardId: id,
 					cardId: update.data?.cardId,
 				});
-				if (update.data?.cardId?.data?.targetGroup) {
+
+				if (update.data?.data?.targetGroup) {
 					getTasks({
 						boardId: id,
-						cardId: update.data?.targetGroup,
+						cardId: update.data?.data?.targetGroup,
+					});
+				}
+				if (update.data?.data?.sourceGroup) {
+					getTasks({
+						boardId: id,
+						cardId: update.data?.data?.sourceGroup,
 					});
 				}
 			} else {
@@ -106,11 +112,16 @@ export default function BoardDetail() {
 		})?.unwrap()?.then(() => {
 			emit('board-updated', {
 				boardId: id,
-				update: { type: 'reorder-card' },
+				update: {
+					type: 'reorder-task', data: {
+						boardId: id,
+						cardId: task.cardId,
+					},
+				},
 			});
 		})
 	}
-	const handleAddOrTask = (card: Card, task?: Task) => {
+	const handleAddOrEditTask = (card: Card, task?: Task) => {
 		handleOpenTask()
 		setSelectedCard(card)
 		setSelectedTask(task || null)
@@ -156,6 +167,7 @@ export default function BoardDetail() {
 		sourceGroup: string,
 		targetGroup: string,
 	}) => {
+
 		if(!id) return;
 		if(sourceGroup === targetGroup) {
 			reorderTasks({
@@ -206,6 +218,7 @@ export default function BoardDetail() {
 									sourceId: sourceId,
 									targetId: targetId || '-1',
 									targetGroup: targetGroup,
+									sourceGroup: sourceGroup,
 								},
 							},
 						},
@@ -215,7 +228,15 @@ export default function BoardDetail() {
 
 
 	}
+	const itemList = useMemo(() => {
+		return cards?.map((card) => ({
+			...card,
+			tasks: tasksByCardId[card.id] ?? [],
+		})) ?? [];
+	}, [cards, tasksByCardId]);
 	if (getDetailBoardsStatus.error) return <ErrorPage message={getDetailBoardsStatus.error} />;
+
+
 
 	return (
 		<>
@@ -230,10 +251,7 @@ export default function BoardDetail() {
 						</Typography>
 					</Box>
 					<MultipleContainers
-						items={cards?.map((card) => ({
-							...card,
-							tasks: tasksByCardId[card.id]
-						}))}
+						items={itemList}
 						containerStyle={{
 							backgroundColor: theme => {
 								return theme.palette.action.focus
@@ -245,7 +263,7 @@ export default function BoardDetail() {
 						onReorderCard={handleReorderCard}
 						onCardClick={handleAddCard}
 						onReorderTask={handleReorderTask}
-						onTaskClick={handleAddOrTask}
+						onTaskClick={handleAddOrEditTask}
 					/>
 				</Box>
 			</DrawerLayout>

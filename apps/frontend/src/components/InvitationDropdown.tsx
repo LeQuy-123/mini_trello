@@ -58,7 +58,7 @@ const InvitationDropdown = ({ label }: { label?: string }) => {
 							}}
 						>
 							<Typography fontWeight="bold">
-								{invitation.type === 'recivie' ?
+								{invitation.type === 'received' ?
 									`From: ${invitation.sender.name} (${invitation.sender.email})` :
 									`To: ${invitation.recipient.name} (${invitation.recipient.email})`}
 							</Typography>
@@ -66,7 +66,7 @@ const InvitationDropdown = ({ label }: { label?: string }) => {
 								Board Invite
 							</Typography>
 
-							{invitation.status === 'pending' && invitation.type === 'recivie' ? (
+							{invitation.status === 'pending' && invitation.type === 'received' ? (
 								<Box mt={1} display="flex" gap={1}>
 									<Button
 										variant="outlined"

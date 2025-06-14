@@ -6,7 +6,7 @@ export type Invitation = {
 	boardId: string;
 	boardOwnerId: string;
 	memberId: string;
-	type: 'send' | 'recivie';
+	type: 'send' | 'received';
 	status: InvitationStatus;
 	createdAt: number;
 	sender: { name: string; email: string };

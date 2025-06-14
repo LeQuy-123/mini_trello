@@ -26,7 +26,7 @@ export const UserInvitationModal: React.FC<UserInvitationModalProps> = ({ open, 
 	const { getUser, users, sendInvitation, sendInvitationStatus, invitations, getInvitations } =
 		useInvitation();
 	const { users: invitedUserIds } = useBoard();
-	const { id } = useParams<{ id: string }>();
+	const { id: currentBoardId } = useParams<{ id: string }>();
 
 	useEffect(() => {
 		if (open) {
@@ -36,8 +36,8 @@ export const UserInvitationModal: React.FC<UserInvitationModalProps> = ({ open, 
 	}, [open]);
 
 	const handleInvite = async (userId: string, email: string) => {
-		if (!id) return;
-		await sendInvitation(id, {
+		if (!currentBoardId) return;
+		await sendInvitation(currentBoardId, {
 			memberId: userId,
 			emailMember: email,
 		})
@@ -74,10 +74,10 @@ export const UserInvitationModal: React.FC<UserInvitationModalProps> = ({ open, 
 					>
 						<List>
 							{users.map((user, index) => {
-								const isInvited =
+								const isAlreadyOnBoard =
 									invitedUserIds.findIndex((iu) => iu.id === user.id) !== -1;
-								const isSendInvation =
-									invitations?.findIndex((iv) => iv.memberId === user.id) != -1;
+								const isAlreadySendInvitation =
+									invitations?.findIndex((iv) => iv.memberId === user.id && iv.boardId === currentBoardId) !== -1;
 								const isCurrentUser = currentUser?.id === user.id;
 								if (isCurrentUser) return;
 								return (
@@ -93,20 +93,20 @@ export const UserInvitationModal: React.FC<UserInvitationModalProps> = ({ open, 
 											<ListItemText
 												primary={
 													<Typography
-														variant={isCurrentUser ? 'h6' : 'inherit'}
+														variant={'inherit'}
 													>
 														{user.name}
 													</Typography>
 												}
 												secondary={user.email}
 											/>
-											{!isInvited && (
+											{!isAlreadyOnBoard && (
 												<Button
 													variant="outlined"
 													size="small"
 													disabled={
 														sendInvitationStatus.loading ||
-														isSendInvation
+														isAlreadySendInvitation
 													}
 													onClick={() =>
 														handleInvite(user.id, user.email)
@@ -114,7 +114,7 @@ export const UserInvitationModal: React.FC<UserInvitationModalProps> = ({ open, 
 												>
 													{sendInvitationStatus.loading ? (
 														<CircularProgress size={20} />
-													) : isSendInvation ? (
+													) : isAlreadySendInvitation ? (
 														'Invited'
 													) : (
 														'Invite'

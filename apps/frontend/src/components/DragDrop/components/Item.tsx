@@ -67,7 +67,6 @@ export const Item = React.memo(
 			},
 			ref
 		) => {
-
 			useEffect(() => {
 				if (dragOverlay) {
 					document.body.style.cursor = 'grabbing';
@@ -194,8 +193,13 @@ export const Item = React.memo(
 									>
 										{data?.title || value}
 									</Typography>
-								</Box>
 
+								</Box>
+								{/* <Stack direction='row'>
+									<Chip>
+										{JSON.stringify()}
+									</Chip>
+								</Stack> */}
 							</Box>
 						<Box sx={actionsSx}>
 							{onRemove && (
