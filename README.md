@@ -99,33 +99,123 @@ yarn dev
 
 ## 🧱 Folder Structure
 
-```
-frontend/
-├── public/               # Static assets
-├── src/
-│   ├── auth/             # Route guards
-│   ├── components/       # Reusable components
-│   ├── pages/            # Route-based components
-│   ├── store/            # Redux store configuration
-│   ├── App.tsx           # Main App component
-│   ├── main.tsx          # Entry point
-│   └── socket.ts         # WebSocket logic
-├── index.html            # HTML template
-├── vite.config.ts        # Vite configuration
-├── tsconfig.json         # TypeScript config
-└── package.json          # Project metadata
-```
+Directory structure:
+└── lequy-123-mini_trello/
+    ├── README.md
+    ├── package.json
+    ├── .editorconfig
+    ├── .prettierrc
+    ├── apps/
+    │   ├── backend/
+    │   │   ├── nodemon.json
+    │   │   ├── package.json
+    │   │   ├── tsconfig.json
+    │   │   ├── yarn.lock
+    │   │   └── src/
+    │   │       ├── firebase.ts
+    │   │       ├── index.ts
+    │   │       ├── socket.ts
+    │   │       ├── middleware/
+    │   │       │   ├── authMiddleware.ts
+    │   │       │   └── checkBoardAccess.ts
+    │   │       ├── routes/
+    │   │       │   ├── auth.ts
+    │   │       │   ├── boards.ts
+    │   │       │   ├── cards.ts
+    │   │       │   ├── invitations.ts
+    │   │       │   ├── tasks.ts
+    │   │       │   └── users.ts
+    │   │       └── types/
+    │   │           ├── Board.ts
+    │   │           ├── Card.ts
+    │   │           ├── express.d.ts
+    │   │           ├── Task.ts
+    │   │           └── User.ts
+    │   └── frontend/
+    │       ├── README.md
+    │       ├── eslint.config.js
+    │       ├── index.html
+    │       ├── package.json
+    │       ├── tsconfig.app.json
+    │       ├── tsconfig.json
+    │       ├── tsconfig.node.json
+    │       ├── vite.config.ts
+    │       ├── yarn.lock
+    │       ├── .gitignore
+    │       ├── public/
+    │       └── src/
+    │           ├── App.css
+    │           ├── App.tsx
+    │           ├── index.css
+    │           ├── main.tsx
+    │           ├── socket.ts
+    │           ├── vite-env.d.ts
+    │           ├── assets/
+    │           ├── auth/
+    │           │   ├── ProtectedRoute.tsx
+    │           │   └── PublicRoute.tsx
+    │           ├── components/
+    │           │   ├── AppLayout.tsx
+    │           │   ├── BoardList.tsx
+    │           │   ├── CreateBoardModal.tsx
+    │           │   ├── CreateCardModal.tsx
+    │           │   ├── CreateTaskModal.tsx
+    │           │   ├── CustomTextField.tsx
+    │           │   ├── DrawerLayout.tsx
+    │           │   ├── ErrorPage.tsx
+    │           │   ├── InvitationDropdown.tsx
+    │           │   ├── LoadingPage.tsx
+    │           │   ├── NotFoundPage.tsx
+    │           │   ├── UserInvitationModal.tsx
+    │           │   ├── UserList.tsx
+    │           │   ├── DragDrop/
+    │           │   │   ├── MultipleContainers.tsx
+    │           │   │   └── components/
+    │           │   │       ├── Container.tsx
+    │           │   │       ├── DroppableContainer.tsx
+    │           │   │       ├── index.ts
+    │           │   │       ├── Item.tsx
+    │           │   │       └── SortableItem.tsx
+    │           │   └── DragDropSet/
+    │           │       ├── CardComponent.tsx
+    │           │       ├── CardList.tsx
+    │           │       └── TaskComponent.tsx
+    │           ├── pages/
+    │           │   ├── BoardDetail.tsx
+    │           │   ├── Boards.tsx
+    │           │   ├── GitHubCallback.tsx
+    │           │   ├── Profile.tsx
+    │           │   ├── Settings.tsx
+    │           │   ├── SignIn.tsx
+    │           │   └── SignUp.tsx
+    │           ├── services/
+    │           │   ├── apiClient.ts
+    │           │   ├── authService.ts
+    │           │   ├── boardService.ts
+    │           │   ├── cardService.ts
+    │           │   ├── invitationService.ts
+    │           │   └── taskService.ts
+    │           ├── store/
+    │           │   ├── authSlice.ts
+    │           │   ├── boardSlice.ts
+    │           │   ├── cardSlice.ts
+    │           │   ├── hooks.ts
+    │           │   ├── index.ts
+    │           │   ├── invitationSlice.ts
+    │           │   ├── taskSlice.ts
+    │           │   └── themeSlice.ts
+    │           └── utils/
+    │               ├── helper.ts
+    │               ├── type.ts
+    │               ├── useAuth.ts
+    │               ├── useBoard.ts
+    │               ├── useCard.ts
+    │               ├── useCustomTheme.ts
+    │               ├── useInvitation.ts
+    │               ├── useSocket.ts
+    │               └── useTask.ts
+    └── assets/
 
-```
-apps/backend/
-├── src/
-│   ├── middleware/
-│   ├── routes/
-│   ├── types/
-│   ├── firebase.ts
-│   ├── socket.ts
-│   └── index.ts
-```
 
 
 ---
