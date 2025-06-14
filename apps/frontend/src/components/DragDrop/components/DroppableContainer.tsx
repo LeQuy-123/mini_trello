@@ -2,9 +2,7 @@ import {
 	type UniqueIdentifier,
 } from '@dnd-kit/core';
 import {
-	type AnimateLayoutChanges,
 	useSortable,
-	defaultAnimateLayoutChanges,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
@@ -14,8 +12,6 @@ import type { SxProps } from '@mui/material';
 
 
 
-const animateLayoutChanges: AnimateLayoutChanges = (args) =>
-	defaultAnimateLayoutChanges({ ...args, wasDragging: true });
 
 export default function DroppableContainer({
 	children,
@@ -40,7 +36,6 @@ export default function DroppableContainer({
 				type: 'container',
 				children: items,
 			},
-			animateLayoutChanges,
 		});
 	const isOverContainer = over
 		? (id === over.id && active?.data.current?.type !== 'container') || items.includes(over.id)

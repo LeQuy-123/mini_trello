@@ -551,11 +551,11 @@ router.patch('/reorder', authenticate, checkBoardAccess, async (req: Request, re
  */
 router.patch('/move', authenticate, checkBoardAccess, async (req: Request, res: Response) => {
 	const { id: sourceCardId } = req.params;
-	const { sourceId, targetId, targetGroup } = req.body;
+	const { sourceId, targetGroup, targetIndex } = req.body;
 
-	if (!sourceId || !targetId || !targetGroup) {
+	if (!sourceId || !targetGroup || targetIndex === undefined) {
 		res.status(400).json({ error: 'Missing required fields' });
-		return;
+		return
 	}
 
 	try {
@@ -573,8 +573,9 @@ router.patch('/move', authenticate, checkBoardAccess, async (req: Request, res: 
 		const sourceIndex = sourceTasks.findIndex((task) => task.id === sourceId);
 		if (sourceIndex === -1) {
 			res.status(400).json({ error: 'Source task not found in source card' });
-			return;
+			return
 		}
+
 		const [movedTask] = sourceTasks.splice(sourceIndex, 1);
 
 		const batch = db.batch();
@@ -584,39 +585,33 @@ router.patch('/move', authenticate, checkBoardAccess, async (req: Request, res: 
 			batch.update(ref, { cardIndex: i });
 		});
 
-		if (targetId === '-1') {
-			const movedRef = db.collection('tasks').doc(movedTask.id);
-			batch.update(movedRef, { cardId: targetGroup, cardIndex: 0 });
-		} else {
-			const targetSnapshot = await db
-				.collection('tasks')
-				.where('cardId', '==', targetGroup)
-				.orderBy('cardIndex')
-				.get();
+		const targetSnapshot = await db
+			.collection('tasks')
+			.where('cardId', '==', targetGroup)
+			.orderBy('cardIndex')
+			.get();
 
-			const targetTasks = targetSnapshot.docs.map((doc) => ({
-				id: doc.id,
-				...doc.data(),
-			}));
+		let targetTasks = targetSnapshot.docs.map((doc) => ({
+			id: doc.id,
+			...doc.data(),
+		}));
 
-			const targetIndex = targetTasks.findIndex((task) => task.id === targetId);
-
-			if (targetIndex === -1) {
-				res.status(400).json({ error: 'Target task not found in target card' });
-				return;
-			}
-
-			targetTasks.splice(targetIndex, 0, movedTask);
-
-			targetTasks.forEach((task, i) => {
-				const ref = db.collection('tasks').doc(task.id);
-				const update: any = { cardIndex: i };
-				if (task.id === movedTask.id) {
-					update.cardId = targetGroup;
-				}
-				batch.update(ref, update);
-			});
+		if (sourceCardId === targetGroup) {
+			targetTasks = targetTasks.filter((task) => task.id !== movedTask.id);
 		}
+
+		const safeIndex = Math.max(0, Math.min(targetIndex, targetTasks.length));
+
+		targetTasks.splice(safeIndex, 0, movedTask);
+
+		targetTasks.forEach((task, i) => {
+			const ref = db.collection('tasks').doc(task.id);
+			const update: any = { cardIndex: i };
+			if (task.id === movedTask.id) {
+				update.cardId = targetGroup;
+			}
+			batch.update(ref, update);
+		});
 
 		await batch.commit();
 
@@ -626,5 +621,6 @@ router.patch('/move', authenticate, checkBoardAccess, async (req: Request, res: 
 		res.status(500).json({ error: 'Failed to move task', details: error });
 	}
 });
+
 
 export default router;

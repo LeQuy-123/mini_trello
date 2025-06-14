@@ -127,7 +127,7 @@ export default function BoardDetail() {
 			});
 		})
 	}
-	const handleReorderCard = ({ active , over}:{ active: Active , over: Over | null}) => {
+	const handleReorderCard = ({ active, over }: { active: Active, over: Over | null }) => {
 		if (!id) return
 		if (!over?.id) return
 		reorderCard({
@@ -149,9 +149,10 @@ export default function BoardDetail() {
 		setSelectedCard(card || null)
 		handleOpen()
 	}
-	const handleReorderTask = ({ sourceId, targetId,sourceGroup, targetGroup }: {
+	const handleReorderTask = ({ sourceId, targetId, sourceGroup, targetIndex, targetGroup }: {
 		sourceId: string,
 		targetId: string,
+		targetIndex:  number,
 		sourceGroup: string,
 		targetGroup: string,
 	}) => {
@@ -188,7 +189,7 @@ export default function BoardDetail() {
 				cardId: sourceGroup,
 				data: {
 					sourceId: sourceId,
-					targetId: targetId || '-1',
+					targetIndex: targetIndex,
 					targetGroup: targetGroup,
 				},
 			})

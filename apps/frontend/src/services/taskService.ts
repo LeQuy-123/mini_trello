@@ -4,8 +4,10 @@ export type TaskReorderBody = {
 	sourceId: string;
 	targetId: string;
 };
-export type TaskMoveBody = TaskReorderBody & {
+export type TaskMoveBody = {
+	sourceId: string;
 	targetGroup: string;
+	targetIndex: number;
 };
 export interface Task {
 	id: string;

@@ -26,6 +26,7 @@ import {
 	verticalListSortingStrategy,
 	type SortingStrategy,
 	horizontalListSortingStrategy,
+	arrayMove,
 } from '@dnd-kit/sortable';
 
 import { Item, Container } from './components';
@@ -44,7 +45,6 @@ export default {
 
 
 export const TRASH_ID = 'void';
-const PLACEHOLDER_ID = 'placeholder';
 
 const dropAnimation: DropAnimation = {
 	sideEffects: defaultDropAnimationSideEffects({
@@ -88,6 +88,7 @@ interface Props {
 	onReorderTask: (data: {
 		sourceId: string,
 		targetId: string,
+		targetIndex: number,
 		sourceGroup: string,
 		targetGroup: string,
 	}) => void;
@@ -133,10 +134,12 @@ export function MultipleContainers({
 			recentlyMoved.current = false;
 		});
 	}, [items]);
-
+	const taskListLengthsSignature = initialItems
+		?.map(item => item.tasks?.length ?? 0)
+		.join(',');
 	useEffect(() => {
 		setItems(initialItems);
-	}, [initialItems]);
+	}, [initialItems?.length, taskListLengthsSignature]);
 
 	const collisionDetection: CollisionDetection = useCallback((args) => {
 		if (activeId && isCardId(activeId)) {
@@ -178,41 +181,39 @@ export function MultipleContainers({
 	}, [activeId, items]);
 
 	const sensors = useSensors(
-		// useSensor(MouseSensor),
 		useSensor(TouchSensor),
-		// useSensor(KeyboardSensor, {
-		// 	coordinateGetter,
-		// }),
 		useSensor(PointerSensor, {
 			activationConstraint: {
 				delay: 100,
 				tolerance: 5,
 			},
 		})
-
 	);
 	const isCardId = (id: UniqueIdentifier) => items.some((card) => card.id === id);
 
 	const findCardById = (id: UniqueIdentifier): (Card & { tasks: Task[] }) | undefined =>
-		items.find((card) => card.id === id || card.tasks.some((task) => task.id === id));
+		items.find((card) => card.id === id || card.tasks?.some((task) => task.id === id));
 
 	const getTasksByCardId = (cardId: UniqueIdentifier) =>
 		items.find((card) => card.id === cardId)?.tasks ?? [];
 
 	const findContainerId = (id: UniqueIdentifier): string | undefined =>
 		items.find((card) => card.id === id)?.id ??
-		items.find((card) => card.tasks.some((task) => task.id === id))?.id;
+		items.find((card) => card.tasks?.some((task) => task.id === id))?.id;
 
 	const getTaskIndex = (id: UniqueIdentifier): number => {
 		const cardId = findContainerId(id);
 		return (
-			items.find((card) => card.id === cardId)?.tasks.findIndex((task) => task.id === id) ?? -1
+			items.find((card) => card.id === cardId)?.tasks.findIndex((task) => task?.id === id) ?? -1
 		);
 	};
+
 	function findCardByTaskId(taskId: string) {
 		return items.find(card => card.tasks?.some(task => task.id === taskId));
 	}
-
+	function findCardByTaskIdInClone(taskId: string) {
+		return clonedItems?.find(card => card.tasks?.some(task => task.id === taskId));
+	}
 	return (
 		<DndContext
 			sensors={sensors}
@@ -223,110 +224,81 @@ export function MultipleContainers({
 				},
 			}}
 			onDragStart={({ active }) => {
+				console.log("🚀 ~onDragStart active:", active.id)
 				setActiveId(active.id);
 				setClonedItems(structuredClone(items));
 			}}
 			onDragOver={({ active, over }) => {
 				if (!over || !active) return;
-				if (isSortingCard) {
-					// Handle card (column) reorder
-					if (active.id === over.id) return;
-
-					const activeIndex = items.findIndex(c => c.id === active.id);
-					const overIndex = items.findIndex(c => c.id === over.id);
-					if (activeIndex === -1 || overIndex === -1) return;
-
-					const updatedItems = [...items];
-					const [moved] = updatedItems.splice(activeIndex, 1);
-					updatedItems.splice(overIndex, 0, moved);
-					setItems(updatedItems);
-					return;
-				} else {
-					const activeCard = findCardById(active.id);
-					const overCard = findCardByTaskId(String(over.id)) ?? findCardById(over.id);
-					if (!activeCard || !overCard) return;
-
-					if (activeCard.id === overCard.id && active.id === over.id) return;
-
+				if (isCardId(active.id)) return; // onDragOver only handle the case when we drag task
+				const activeCard = findCardById(active.id);
+				const overCard = findCardByTaskId(String(over.id)) ?? findCardById(over.id);
+				if (!activeCard || !overCard) return;
+				if (activeCard.id !== overCard.id) { // onDragOver only handle the case when we drag task to diffrent card
 					const fromTasks = [...activeCard.tasks];
 					const toTasks = [...(overCard.tasks || [])];
-
 					const fromIndex = fromTasks.findIndex(task => task.id === active.id);
 					const overIndex = toTasks.findIndex(task => task.id === over.id);
-
-					// Already in right place
-					if (activeCard.id === overCard.id && fromIndex === overIndex) return;
-
-					const [movedTask] = fromTasks.splice(fromIndex, 1);
-
-					const insertAt = overIndex >= 0 ? overIndex : toTasks.length;
-
-					if (activeCard.id === overCard.id) {
-						// Moving within same card
-						fromTasks.splice(insertAt > fromIndex ? insertAt - 1 : insertAt, 0, movedTask);
-					} else {
-						// Between different cards
-						toTasks.splice(insertAt, 0, movedTask);
-					}
-
-					const updated = items.map(card => {
-						if (card.id === activeCard.id) return { ...card, tasks: fromTasks };
-						if (card.id === overCard.id) return { ...card, tasks: toTasks };
-						return card;
-					});
-
+					const isBelowOverItem =
+						over &&
+						active.rect.current.translated &&
+						active.rect.current.translated.top >
+						over.rect.top + over.rect.height;
+					const modifier = isBelowOverItem ? 1 : 0;
+					const newIndex =
+						overIndex >= 0 ? overIndex + modifier : toTasks.length + 1;
 					recentlyMoved.current = true;
-					setItems(updated);
+					setItems((items) => {
+						return items.map(card => {
+							if (card.id === activeCard.id) return { ...card, tasks: fromTasks?.filter((task) => task.id !== active.id) };
+							if (card.id === overCard.id) return {
+								...card, tasks: [
+									...toTasks.slice(0, newIndex),
+									fromTasks[fromIndex],
+									...toTasks.slice(
+										newIndex,
+										toTasks.length
+									),
+								]
+							};
+							return card;
+						});
+					});
 				}
 			}}
 			onDragEnd={({ active, over }) => {
 				if (!over || !active) return;
-
 				if (isSortingCard) {
-					if (active.id === over.id) return;
-
+					if (active.id === over.id) return; // not thing change
 					const activeIndex = items.findIndex(c => c.id === active.id);
 					const overIndex = items.findIndex(c => c.id === over.id);
-
-					if (activeIndex === -1 || overIndex === -1) return;
-
+					if (activeIndex === -1 || overIndex === -1) return;// some thing wrong when i cant find the card
 					const updatedItems = [...items];
 					const [moved] = updatedItems.splice(activeIndex, 1);
 					updatedItems.splice(overIndex, 0, moved);
-					setItems(updatedItems);
 					setActiveId(null);
-
 					onReorderCard({ active, over })
-					return;
+					setItems((pre) => arrayMove(pre, activeIndex, overIndex));
+
+					return
 				} else {
-					if (active.id === over.id) return;
-					const activeCard = findCardByTaskId(String(active.id));
+					const activeCard = findCardByTaskId(String(activeId));
 					const overCard = findCardByTaskId(String(over.id)) ?? findCardById(over.id);
-					onReorderTask({
-						sourceId: String(active.id),
-						targetId: String(over.id),
-						sourceGroup: String(activeCard?.id),
-						targetGroup: overCard?.id || String(active.id)
-					})
 
 					if (!activeCard || !overCard) return;
-
 					const fromTasks = [...activeCard.tasks];
 					const toTasks = [...overCard.tasks];
-
 					const fromIndex = fromTasks.findIndex(task => task.id === active.id);
 					const overIndex = toTasks.findIndex(task => task.id === over.id);
-					if (fromIndex === -1) return;
-
-					const [movedTask] = fromTasks.splice(fromIndex, 1);
-					const insertAt = overIndex >= 0 ? overIndex : toTasks.length;
-
-					if (activeCard.id === overCard.id) {
-						fromTasks.splice(insertAt, 0, movedTask);
-						setItems(items.map(card =>
-							card.id === activeCard.id ? { ...card, tasks: fromTasks } : card
-						));
+					if (activeCard.id === overCard.id) { // move task in the same card
+						setItems(items.map(card => {
+							const newList = card.id === activeCard.id ? { ...card, tasks: arrayMove(card.tasks, fromIndex, overIndex) } : card;
+							return newList
+						}));
 					} else {
+						if (fromIndex === -1) return;
+						const [movedTask] = fromTasks.splice(fromIndex, 1);
+						const insertAt = overIndex >= 0 ? overIndex : toTasks.length;
 						toTasks.splice(insertAt, 0, movedTask);
 						setItems(items.map(card => {
 							if (card.id === activeCard.id) return { ...card, tasks: fromTasks };
@@ -335,6 +307,15 @@ export function MultipleContainers({
 						}));
 					}
 					setActiveId(null);
+					onReorderTask({
+						sourceId: String(activeId),
+						targetId: String(over.id),
+						targetIndex: overIndex,
+						// make sure to find the correct card by using cloned state because
+						// the items state already change in onDragOver
+						sourceGroup: String(findCardByTaskIdInClone(String(activeId))?.id),
+						targetGroup:  overCard?.id
+					})
 				}
 			}}
 
@@ -352,12 +333,12 @@ export function MultipleContainers({
 				gap: 20,
 				boxSizing: 'border-box',
 				padding: 20,
-				alignItems: 'flex-start', // important: allows uneven heights
+				alignItems: 'flex-start',
 				flexWrap: 'nowrap',
 				overflowX: vertical ? 'hidden' : 'auto'
 			}}>
 				<SortableContext
-					items={[...items.map((card) => card.id), PLACEHOLDER_ID]}
+					items={items.map((card) => card?.id)}
 					strategy={vertical ? verticalListSortingStrategy : horizontalListSortingStrategy}
 				>
 					{items.map((card) => {
@@ -367,7 +348,7 @@ export function MultipleContainers({
 								data={card}
 								key={card.id}
 								id={card.id}
-								items={tasks ? tasks?.map((task) => task.id) : []}
+								items={tasks ? tasks?.map((task) => task?.id) : []}
 								scrollable={scrollable}
 								style={containerStyle}
 								unstyled={minimal}
@@ -377,8 +358,8 @@ export function MultipleContainers({
 								<SortableContext items={tasks} strategy={strategy}>
 									{tasks?.map((task, index) => (
 										<SortableItem
-											key={task.id}
-											id={task.id}
+											key={task?.id}
+											id={task?.id}
 											index={index}
 											data={task}
 											handle={handle}
@@ -388,7 +369,7 @@ export function MultipleContainers({
 											renderItem={renderItem}
 											containerId={card.id}
 											getIndex={getTaskIndex}
-											status={task.status}
+											status={task?.status}
 											onRemove={() => onRemoveTask(task)}
 											onTaskClick={() => onTaskClick(card, task)}
 										/>
@@ -404,8 +385,8 @@ export function MultipleContainers({
 						)
 					})}
 
-					<Container onClick={() => onCardClick()} hover style={{cursor:'pointer'}}>
-						<Box sx={{with: '100%',  display: 'flex', justifyContent: 'center', alignItems: 'center', mt: 6}}>
+					<Container onClick={() => onCardClick()} hover style={{ cursor: 'pointer' }}>
+						<Box sx={{ with: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', mt: 6 }}>
 							<Typography variant='h5'>
 								+ Card
 							</Typography>
@@ -417,7 +398,7 @@ export function MultipleContainers({
 			{createPortal(
 				<DragOverlay adjustScale={adjustScale} dropAnimation={dropAnimation}>
 					{activeId
-						? items.some((card) => card.id === activeId)
+						? isSortingCard
 							? renderContainerDragOverlay(activeId)
 							: renderSortableItemDragOverlay(activeId)
 						: null}
@@ -497,7 +478,6 @@ export function MultipleContainers({
 				))}
 				<Item
 					value={'+ Task'}
-					color={'green'}
 					renderItem={renderItem}
 					onTaskClick={() => onTaskClick(card, undefined)}
 				/>
