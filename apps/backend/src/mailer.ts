@@ -16,6 +16,7 @@ export async function sendOtpEmail(to: string, otp: string) {
 		from: `Mini Trello <${process.env.EMAIL_USER}>`,
 		to,
 		text: `Your OTP code is: ${otp}`,
+		subject: 'Mini trello OTP',
 		html: `<p>Your OTP code is:
 			<b>${otp}</b>
 		</p>
