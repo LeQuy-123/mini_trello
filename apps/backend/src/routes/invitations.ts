@@ -180,9 +180,12 @@ router.get('/', authenticate, async (req: Request, res: Response) => {
 			userIds.add(inv.memberId);
 		});
 
-		const userDocs = await db.getAll(
-			...[...userIds].map((uid) => db.collection('users').doc(uid))
-		);
+		const userRefs = [...userIds].map((uid) => db.collection('users').doc(uid));
+		let userDocs: any[] = [];
+
+		if (userRefs.length > 0) {
+			userDocs = await db.getAll(...userRefs);
+		}
 
 		const userMap = new Map<string, { name: string; email: string }>();
 		userDocs.forEach((doc) => {

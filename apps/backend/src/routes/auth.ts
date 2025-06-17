@@ -9,15 +9,21 @@ import { Request, Response, Router } from 'express';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { db } from '../firebase';
-import { User } from '../types/User';
+import { OtpCode, User } from '../types/User';
 import { authenticate } from '../middleware/authMiddleware';
 import dotenv from 'dotenv';
 import axios from 'axios';
+import { sendOtpEmail } from '../mailer';
 
 dotenv.config();
 
 const router = Router();
 const JWT_SECRET = process.env.JWT_SECRET || 'default_secret';
+function generateOtp(length = 6): string {
+	return Math.floor(100000 + Math.random() * 900000)
+		.toString()
+		.substring(0, length);
+}
 
 /**
  * @swagger
@@ -75,6 +81,85 @@ router.post('/signup', async (req: Request, res: Response) => {
 
 	res.status(201).json({ user: { id: userDoc.id, email, name } });
 });
+
+router.post('/signup/init', async (req: Request, res: Response) => {
+	const { email } = req.body;
+	const usersRef = db.collection('users');
+	const existing = await usersRef.where('email', '==', email).get();
+
+	if (!existing.empty) {
+		res.status(400).json({ message: 'Email already in use' });
+		return
+	}
+
+	const otp = generateOtp();
+	const otpRef = db.collection('otp_codes').doc(email);
+	await otpRef.set({
+		email,
+		code: otp,
+		createdAt: new Date(),
+	});
+
+	await sendOtpEmail(email, otp);
+	res.json({ message: 'OTP sent to email' });
+});
+router.post('/signup/verify', async (req: Request, res: Response) => {
+	const { email, password, name, otp } = req.body;
+
+	const otpDoc = await db.collection('otp_codes').doc(email).get();
+	if (!otpDoc.exists) {
+		res.status(400).json({ message: 'OTP not found or expired' });
+		return
+	}
+
+	const data = otpDoc.data() as OtpCode;
+	const now = new Date().getTime();
+	const created = data.createdAt.toDate().getTime();
+	const expiresIn = 5 * 60 * 1000; // 5 minutes, will be change latter
+
+	if (now - created > expiresIn) {
+		await otpDoc.ref.delete();
+		res.status(400).json({ message: 'OTP expired' });
+		return
+	}
+
+	if (data.code !== otp) {
+		res.status(400).json({ message: 'Invalid OTP' });
+		return
+	}
+
+	const hash = await bcrypt.hash(password, 10);
+	const userDoc = db.collection('users').doc();
+
+	const newUser: User = {
+		id: userDoc.id,
+		email,
+		name,
+		password: hash,
+		createdAt: new Date(),
+	};
+
+	await userDoc.set(newUser);
+	await otpDoc.ref.delete(); // Clean up used OTP
+
+	res.status(201).json({ user: { id: userDoc.id, email, name } });
+});
+
+router.post('/signup/resend', async (req: Request, res: Response) => {
+	const { email } = req.body;
+
+	const otp = generateOtp();
+	const otpRef = db.collection('otp_codes').doc(email);
+	await otpRef.set({
+		email,
+		code: otp,
+		createdAt: new Date(),
+	});
+
+	await sendOtpEmail(email, otp);
+	res.json({ message: 'OTP resent to email' });
+});
+
 
 /**
  * @swagger
@@ -246,14 +331,7 @@ router.get('/github/callback', async (req: Request, res: Response) => {
 		const token = jwt.sign({ uid: userDoc.id }, process.env.JWT_SECRET!, { expiresIn: '7d' });
 		res.redirect(`http://localhost:5173/github-callback?token=${token}`);
 
-		// res.json({
-		// 	user: {
-		// 		id: userDoc.id,
-		// 		email: userData.email,
-		// 		name: userData.name,
-		// 	},
-		// 	token,
-		// });
+
 	} catch (error) {
 		console.error('GitHub OAuth error:', error);
 		res.status(500).json({ message: 'GitHub OAuth failed' });

@@ -6,6 +6,11 @@ import {
 	FormControlLabel,
 	Switch,
 	Typography,
+	Dialog,
+	DialogActions,
+	DialogContent,
+	DialogTitle,
+	TextField,
 } from '@mui/material';
 import { useAuth } from '@utils/useAuth';
 import { useNavigate } from 'react-router-dom';
@@ -15,6 +20,8 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import * as Yup from 'yup';
 import CustomTextField from '@components/CustomTextField';
 import { toast } from 'react-toastify';
+import { useState } from 'react';
+
 type RegisterValue = {
 	name: string;
 	email: string;
@@ -24,12 +31,19 @@ type RegisterValue = {
 
 export default function SignUp() {
 	const navigate = useNavigate();
+	const [openOtp, setOpenOtp] = useState(false);
+	const [otp, setOtp] = useState('');
+	const [formValues, setFormValues] = useState<RegisterValue | null>(null);
+
 	const schema = Yup.object().shape({
-		name: Yup.string().required('Email is required'),
-		email: Yup.string().required('Email is required'),
+		name: Yup.string().required('Username is required'),
+		email: Yup.string().email('Invalid email').required('Email is required'),
 		password: Yup.string().required('Password is required'),
-		passwordRetype: Yup.string().required('Confirm password is required'),
+		passwordRetype: Yup.string()
+			.required('Confirm password is required')
+			.oneOf([Yup.ref('password')], 'Passwords must match'),
 	});
+
 	const {
 		control,
 		handleSubmit,
@@ -39,18 +53,29 @@ export default function SignUp() {
 	});
 
 	const { mode, toggleTheme } = useCustomTheme();
+	const { sendOtp, verifyOtpAndRegister, otpStatus, verifyStatus } = useAuth();
 
-	const { register, registerStatus } = useAuth();
+	const handleSendOtp = async (value: RegisterValue) => {
+		setFormValues(value);
+		try {
+			await sendOtp(value.email).unwrap();
+			setOpenOtp(true);
+		} catch (err: any) {
+			toast.error('Failed to send OTP: ' + err);
+		}
+	};
 
-	const handleLogin = async (value: RegisterValue) => {
-		const { name, email, password } = value;
-		register({ name, email, password })
+	const handleVerifyOtp = async () => {
+		if (!formValues) return;
+		const { name, email, password } = formValues;
+		verifyOtpAndRegister({ name, email, password, otp })
 			.unwrap()
 			.then(() => {
+				setOpenOtp(false);
 				navigate('/boards');
 			})
 			.catch((err) => {
-				toast.error('Register failed: ' + err);
+				toast.error('OTP verification failed: ' + err);
 			});
 	};
 
@@ -67,18 +92,9 @@ export default function SignUp() {
 			<Typography variant="h3" fontWeight={700} gutterBottom textAlign="center">
 				Mini Trello
 			</Typography>
-			<Card
-				elevation={3}
-				sx={{
-					p: 4,
-					width: '100%',
-					maxWidth: 400,
-					boxSizing: 'border-box',
-					position: 'relative',
-				}}
-			>
+			<Card elevation={3} sx={{ p: 4, maxWidth: 400, width: '100%', position: 'relative' }}>
 				<Typography variant="h5" component="h1" gutterBottom>
-					Sign In
+					Sign Up
 				</Typography>
 				<Box position="absolute" top={32} right={8}>
 					<FormControlLabel
@@ -93,35 +109,35 @@ export default function SignUp() {
 					/>
 				</Box>
 
-				<form onSubmit={handleSubmit(handleLogin)}>
+				<form onSubmit={handleSubmit(handleSendOtp)}>
 					<CustomTextField
 						name="name"
-						label={'Username'}
+						label="Username"
 						control={control}
-						error={Boolean(errors.name?.message)}
+						error={!!errors.name}
 						helperText={errors.name?.message || ''}
 					/>
 					<CustomTextField
 						name="email"
-						label={'Email'}
+						label="Email"
 						control={control}
-						error={Boolean(errors.email?.message)}
+						error={!!errors.email}
 						helperText={errors.email?.message || ''}
 					/>
 					<CustomTextField
 						name="password"
-						control={control}
+						label="Password"
 						type="password"
-						label={'Password'}
-						error={Boolean(errors.password?.message)}
+						control={control}
+						error={!!errors.password}
 						helperText={errors.password?.message || ''}
 					/>
 					<CustomTextField
 						name="passwordRetype"
-						control={control}
+						label="Confirm Password"
 						type="password"
-						label={'Password confirm'}
-						error={Boolean(errors.passwordRetype?.message)}
+						control={control}
+						error={!!errors.passwordRetype}
 						helperText={errors.passwordRetype?.message || ''}
 					/>
 					<Button
@@ -129,13 +145,13 @@ export default function SignUp() {
 						fullWidth
 						variant="contained"
 						color="primary"
-						disabled={registerStatus.loading}
+						disabled={otpStatus.loading}
 						sx={{ mt: 2, height: 40 }}
 					>
-						{registerStatus.loading ? (
+						{otpStatus.loading ? (
 							<CircularProgress size={24} color="inherit" />
 						) : (
-							'Sign Up'
+							'Send OTP'
 						)}
 					</Button>
 					<Box mt={2} textAlign="center">
@@ -144,9 +160,7 @@ export default function SignUp() {
 							<Box
 								component="span"
 								sx={{ color: 'primary.main', cursor: 'pointer', fontWeight: 500 }}
-								onClick={() => {
-									navigate('/signin');
-								}}
+								onClick={() => navigate('/signin')}
 							>
 								Sign in
 							</Box>
@@ -154,6 +168,38 @@ export default function SignUp() {
 					</Box>
 				</form>
 			</Card>
+
+			<Dialog open={openOtp} onClose={() => setOpenOtp(false)}>
+				<DialogTitle>Enter OTP</DialogTitle>
+				<DialogContent>
+					<TextField
+						autoFocus
+						margin="dense"
+						label="One-Time Password"
+						fullWidth
+						variant="outlined"
+						value={otp}
+						onChange={(e) => setOtp(e.target.value)}
+					/>
+				</DialogContent>
+				<DialogActions>
+					<Button onClick={() => setOpenOtp(false)} disabled={verifyStatus.loading}>
+						Cancel
+					</Button>
+					<Button
+						onClick={handleVerifyOtp}
+						variant="contained"
+						color="primary"
+						disabled={verifyStatus.loading || otp.trim().length === 0}
+					>
+						{verifyStatus.loading ? (
+							<CircularProgress size={20} color="inherit" />
+						) : (
+							'Confirm'
+						)}
+					</Button>
+				</DialogActions>
+			</Dialog>
 		</Box>
 	);
 }

@@ -12,3 +12,9 @@ export type Invitation = {
 	memberId: string;
 	createdAt?: FirebaseFirestore.Timestamp;
 };
+
+export interface OtpCode {
+	email: string;
+	code: string;
+	createdAt: FirebaseFirestore.Timestamp;
+}
